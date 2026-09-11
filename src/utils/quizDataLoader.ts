@@ -134,7 +134,8 @@ export function evaluateQuizSession(
   timeSpentSeconds: number,
   timeLimitMinutes: number,
   moduleId?: ModuleId,
-  moduleName?: string
+  moduleName?: string,
+  isPracticeMode: boolean = false
 ): QuizEvaluation {
   let rawScore = 0;
   let correctCount = 0;
@@ -184,10 +185,11 @@ export function evaluateQuizSession(
       chapterMap[chapId].correct += 1;
       chapterMap[chapId].points += 2;
     } else {
-      points = -1;
+      // In practice mode, no negative penalty (0 point instead of -1)
+      points = isPracticeMode ? 0 : -1;
       wrongCount += 1;
       chapterMap[chapId].wrong += 1;
-      chapterMap[chapId].points -= 1;
+      chapterMap[chapId].points += points;
     }
 
     rawScore += points;

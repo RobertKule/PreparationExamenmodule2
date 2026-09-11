@@ -43,6 +43,8 @@ export interface QuizConfig {
   durationMinutes: number; // 30, 60, or custom
   passThresholdPercent: number; // default 85%
   shuffleQuestions: boolean;
+  questionCountLimit?: number; // 0 for all, or 10, 20, 30
+  isPracticeMode?: boolean; // true: no penalty for wrong answers (0 pt)
 }
 
 export interface QuizState {

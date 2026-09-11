@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BookOpen, CheckCircle2, Clock, Layers } from 'lucide-react';
+import { AlertCircle, ArrowRight, BookOpen, CheckCircle2, Clock, Layers, X } from 'lucide-react';
 import { Chapter, ModuleId } from '../types';
 import { MODULE_DEFINITIONS } from '../utils/quizDataLoader';
 
@@ -10,6 +10,8 @@ interface HomeViewProps {
   totalQuestions: number;
   onStartConfig: () => void;
   onQuickStartAll: (durationMinutes: number) => void;
+  sessionCancellationNotice?: string | null;
+  onDismissCancellationNotice?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -18,13 +20,42 @@ export const HomeView: React.FC<HomeViewProps> = ({
   chapters,
   totalQuestions,
   onStartConfig,
-  onQuickStartAll
+  onQuickStartAll,
+  sessionCancellationNotice,
+  onDismissCancellationNotice
 }) => {
   const currentMod = MODULE_DEFINITIONS[selectedModuleId];
   const advisedDuration = currentMod.defaultTimeMinutes;
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10 sm:py-14">
+      {/* Session Cancellation Notice (Requirement 1) */}
+      {sessionCancellationNotice && (
+        <div className="mb-8 p-4 rounded-xl bg-slate-900 text-white flex items-start justify-between gap-3 shadow-sm">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <div className="text-xs font-semibold text-white mb-0.5">
+                Session d'examen interrompue
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {sessionCancellationNotice}
+              </p>
+            </div>
+          </div>
+          {onDismissCancellationNotice && (
+            <button
+              type="button"
+              onClick={onDismissCancellationNotice}
+              className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer shrink-0"
+              title="Fermer l'alerte"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Module Selector Segmented Cards */}
       <div className="mb-10">
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">

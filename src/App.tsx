@@ -63,23 +63,62 @@ export default function App() {
   // 5. Résultat d'évaluation
   const [evaluation, setEvaluation] = useState<QuizEvaluation | null>(null);
 
+  // Notice d'annulation de session (Exigence 1)
+  const [sessionCancellationNotice, setSessionCancellationNotice] = useState<string | null>(null);
+
   // Référence pour le calcul d'horloge sans dérive
   const timerIntervalRef = useRef<number | null>(null);
   const targetEndTimeRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
-  // Sécurité anti-quitter accidentel (Section 6 du prompt)
+  // Annuler la session active sans enregistrer ni soumettre les réponses (Exigence 1)
+  const cancelActiveSession = (reason?: string) => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    setIsQuizActive(false);
+    setUserAnswers({});
+    setFlaggedIds({});
+    setActiveQuestions([]);
+    setSessionCancellationNotice(
+      reason ||
+      "Votre session a été automatiquement annulée car vous avez quitté ou actualisé l'interface d'examen avant la validation. Vos réponses n'ont pas été enregistrées."
+    );
+    setCurrentView('home');
+  };
+
+  // Sécurité et détection de sortie de quiz (beforeunload, pagehide, visibilitychange - Exigence 1)
   useEffect(() => {
+    if (!isQuizActive) return;
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isQuizActive) {
-        e.preventDefault();
-        e.returnValue = 'Votre session d\'examen est en cours. Quitter la page entraînera la perte de vos réponses.';
-        return e.returnValue;
+      e.preventDefault();
+      e.returnValue = 'Toute sortie ou rafraîchissement annulera définitivement votre session d\'examen en cours.';
+      return e.returnValue;
+    };
+
+    const handlePageHide = () => {
+      cancelActiveSession();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        cancelActiveSession(
+          "Votre session d'examen a été annulée car vous avez quitté la fenêtre du quiz avant la soumission. Conformément aux consignes de sécurité, vos réponses n'ont pas été enregistrées."
+        );
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [isQuizActive]);
 
   // Gestion du décompte de la minuterie globale (Section 6 du prompt)
@@ -142,6 +181,7 @@ export default function App() {
   // Démarrer une session de quiz
   const handleStartQuiz = (config: QuizConfig) => {
     setCurrentConfig(config);
+    setSessionCancellationNotice(null);
 
     // Filtrer les questions selon les chapitres choisis
     const selectedChaps = quizData.chapters.filter((c) =>
@@ -153,6 +193,11 @@ export default function App() {
     if (config.shuffleQuestions) {
       // Mélange aléatoire avec Fisher-Yates
       questionsToUse = [...questionsToUse].sort(() => Math.random() - 0.5);
+    }
+
+    // Appliquer la limite du nombre de questions si configurée (Exigence stepper)
+    if (config.questionCountLimit && config.questionCountLimit > 0 && config.questionCountLimit < questionsToUse.length) {
+      questionsToUse = questionsToUse.slice(0, config.questionCountLimit);
     }
 
     // Réinitialisation des états
@@ -180,7 +225,20 @@ export default function App() {
       selectedChapterIds: quizData.chapters.map((c) => c.id),
       durationMinutes,
       passThresholdPercent: 85,
-      shuffleQuestions: false
+      shuffleQuestions: false,
+      isPracticeMode: false
+    });
+  };
+
+  // Revoir spécifiquement les chapitres recommandés suite aux erreurs (Exigence 4)
+  const handleReviewRecommendedChapters = (chapterIds: string[]) => {
+    handleStartQuiz({
+      moduleId: selectedModuleId,
+      selectedChapterIds: chapterIds,
+      durationMinutes: Math.max(10, chapterIds.length * 4),
+      passThresholdPercent: currentConfig.passThresholdPercent || 85,
+      shuffleQuestions: false,
+      isPracticeMode: true // Mode entraînement sans pénalité pour favoriser l'apprentissage
     });
   };
 
@@ -221,7 +279,8 @@ export default function App() {
       timeSpentSeconds,
       currentConfig.durationMinutes,
       selectedModuleId,
-      activeModInfo?.name
+      activeModInfo?.name,
+      Boolean(currentConfig.isPracticeMode)
     );
 
     setEvaluation(finalEvaluation);
@@ -240,7 +299,8 @@ export default function App() {
       currentConfig.durationMinutes * 60,
       currentConfig.durationMinutes,
       selectedModuleId,
-      activeModInfo?.name
+      activeModInfo?.name,
+      Boolean(currentConfig.isPracticeMode)
     );
 
     setEvaluation(finalEvaluation);
@@ -259,7 +319,13 @@ export default function App() {
         currentView={currentView}
         selectedModuleId={selectedModuleId}
         onSelectModule={handleSelectModule}
-        onNavigateHome={() => setCurrentView('home')}
+        onNavigateHome={() => {
+          if (isQuizActive) {
+            cancelActiveSession("Vous avez quitté la session pour revenir à l'accueil. La session a été annulée sans enregistrement.");
+          } else {
+            setCurrentView('home');
+          }
+        }}
         onOpenSourceInspector={() => setIsInspectorOpen(true)}
         isQuizActive={isQuizActive}
       />
@@ -274,6 +340,8 @@ export default function App() {
             totalQuestions={quizData.totalQuestions}
             onStartConfig={() => setCurrentView('setup')}
             onQuickStartAll={handleQuickStartAll}
+            sessionCancellationNotice={sessionCancellationNotice}
+            onDismissCancellationNotice={() => setSessionCancellationNotice(null)}
           />
         )}
 
@@ -300,6 +368,7 @@ export default function App() {
             onToggleFlag={handleToggleFlag}
             onNavigateToQuestion={setCurrentQuestionIndex}
             onSubmitQuiz={handleSubmitQuiz}
+            onAbandonQuiz={() => cancelActiveSession("Vous avez choisi d'abandonner l'examen. La session a été annulée et aucune réponse n'a été enregistrée.")}
           />
         )}
 
@@ -309,6 +378,7 @@ export default function App() {
             onViewCorrection={() => setCurrentView('correction')}
             onRetakeSameQuiz={handleRetakeSameQuiz}
             onNewQuiz={() => setCurrentView('setup')}
+            onReviewRecommendedChapters={handleReviewRecommendedChapters}
           />
         )}
 
