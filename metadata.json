@@ -1,0 +1,6 @@
+{
+  "name": "Simulateur Examen Drone — Module 2",
+  "description": "Plateforme d'entraînement et simulation d'examen pour le Module 2 de la formation drone (QCM 60 questions, notation officielle +2/-1/0, minuterie et correction détaillée).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

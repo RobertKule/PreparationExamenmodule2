@@ -1,0 +1,85 @@
+export type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E' | string;
+
+export interface QuestionOption {
+  key: OptionKey;
+  text: string;
+}
+
+export interface Question {
+  id: string; // e.g., "q-2-1-1"
+  chapterId: string;
+  chapterNumber: string;
+  chapterTitle: string;
+  questionNumber: number;
+  globalIndex: number; // 1 to total questions
+  text: string;
+  options: QuestionOption[];
+  correctAnswer?: OptionKey; // Provided or default
+  explanation?: string;
+}
+
+export interface Chapter {
+  id: string;
+  code: string; // e.g. "2.1.11"
+  title: string; // e.g. "Auto-évaluation 2.1 - Aérodynamique & Sustentation"
+  shortTitle: string; // e.g. "Chapitre 2.1"
+  questions: Question[];
+}
+
+export interface QuizConfig {
+  selectedChapterIds: string[]; // empty means all
+  durationMinutes: number; // 30, 60, or custom
+  passThresholdPercent: number; // default 85%
+  shuffleQuestions: boolean;
+}
+
+export interface QuizState {
+  currentQuestionIndex: number;
+  answers: Record<string, OptionKey>; // questionId -> selectedOption
+  flaggedQuestionIds: Record<string, boolean>; // questionId -> boolean
+  startTime: number | null;
+  targetEndTime: number | null;
+  isCompleted: boolean;
+  timeSpentSeconds: number;
+}
+
+export interface QuestionResult {
+  question: Question;
+  userAnswer?: OptionKey;
+  correctAnswer?: OptionKey;
+  isCorrect: boolean;
+  isUnanswered: boolean;
+  points: number; // +2, -1, or 0
+  explanation?: string;
+}
+
+export interface ChapterSummary {
+  chapterId: string;
+  chapterCode: string;
+  chapterTitle: string;
+  totalQuestions: number;
+  correctCount: number;
+  wrongCount: number;
+  unansweredCount: number;
+  points: number;
+  maxPoints: number;
+  percentage: number;
+}
+
+export interface QuizEvaluation {
+  totalQuestions: number;
+  maxScore: number;
+  rawScore: number;
+  percentage: number;
+  correctCount: number;
+  wrongCount: number;
+  unansweredCount: number;
+  isPassed: boolean;
+  passThreshold: number;
+  timeSpentFormatted: string;
+  timeRemainingFormatted: string;
+  timeLimitMinutes: number;
+  results: QuestionResult[];
+  chapterSummaries: ChapterSummary[];
+  weakestChapters: ChapterSummary[];
+}
