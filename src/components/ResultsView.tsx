@@ -45,10 +45,10 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   } = evaluation;
 
   const reviewSectionRef = useRef<HTMLDivElement>(null);
-  const [filterMode, setFilterMode] = useState<'errors' | 'all'>('errors');
 
   // Filter incorrect results and unanswered
   const incorrectResults = results.filter((r) => !r.isCorrect);
+  const [filterMode, setFilterMode] = useState<'errors' | 'all'>(incorrectResults.length > 0 ? 'errors' : 'all');
   const displayedResults = filterMode === 'errors' ? incorrectResults : results;
 
   // Chapter IDs that have errors
@@ -72,7 +72,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <div className="pb-8 border-b border-slate-100 mb-8">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Résultats de l'évaluation • {isPassed ? 'Examen validé' : 'Examen non validé'}
+            Résultats de l'évaluation • {percentage === 100 ? 'Score parfait (100%)' : isPassed ? 'Examen validé' : 'Examen non validé'}
           </span>
           <span
             className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
@@ -97,13 +97,17 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         {/* Personalized Message based on Pass/Fail (Requirement 4) */}
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 mb-6">
           <p className="text-sm text-slate-800 leading-relaxed font-medium">
-            {isPassed
-              ? "Félicitations ! Vous avez réussi cet examen. Continuez à réviser les chapitres concernés pour consolider vos acquis."
+            {percentage === 100
+              ? "Félicitations pour ce score parfait de 100% ! Vous maîtrisez l'ensemble des notions de cette évaluation."
+              : isPassed
+              ? "Félicitations ! Vous avez réussi cet examen. Continuez à réviser les notions pour consolider vos acquis."
               : "Vous n'avez pas atteint le score requis cette fois-ci. Nous vous recommandons de revoir attentivement les chapitres concernés, en particulier les thèmes liés à vos erreurs, avant de retenter l'examen."}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            {isPassed
-              ? "Congratulations! You have successfully completed this quiz. Continue reviewing the related chapters to consolidate your knowledge."
+            {percentage === 100
+              ? "Congratulations on a perfect score of 100%! You have mastered all topics covered in this evaluation."
+              : isPassed
+              ? "Congratulations! You have successfully completed this quiz. Continue reviewing key concepts to consolidate your knowledge."
               : "You did not reach the required score this time. We recommend reviewing the relevant chapters carefully, especially the topics related to your incorrect answers, before attempting the quiz again."}
           </p>
         </div>
@@ -232,28 +236,36 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs">
-            <button
-              type="button"
-              onClick={() => setFilterMode('errors')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                filterMode === 'errors'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Erreurs ({incorrectResults.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterMode('all')}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                filterMode === 'all'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Toutes ({results.length})
-            </button>
+            {incorrectResults.length > 0 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setFilterMode('errors')}
+                  className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                    filterMode === 'errors'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Erreurs ({incorrectResults.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterMode('all')}
+                  className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                    filterMode === 'all'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Toutes ({results.length})
+                </button>
+              </>
+            ) : (
+              <span className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-800 font-medium text-xs">
+                Toutes les réponses ({results.length}) • 100% exactes
+              </span>
+            )}
           </div>
         </div>
 
@@ -414,11 +426,16 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             Retenter l'examen
           </button>
           <button
+            id="btn-view-correction"
             type="button"
             onClick={onViewCorrection}
             className="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors inline-flex items-center gap-2 cursor-pointer shadow-xs"
           >
-            <span>Afficher la correction complète</span>
+            <span>
+              {incorrectResults.length > 0
+                ? "Consulter la correction (mes erreurs d'abord)"
+                : "Consulter toutes les réponses & explications"}
+            </span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

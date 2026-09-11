@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, RotateCcw, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, CheckCircle2, RotateCcw, X } from 'lucide-react';
 import { QuizEvaluation } from '../types';
 
 interface CorrectionViewProps {
@@ -13,12 +13,21 @@ export const CorrectionView: React.FC<CorrectionViewProps> = ({
   onBackToResults,
   onRetakeQuiz
 }) => {
-  const [filterType, setFilterType] = useState<'all' | 'wrong' | 'correct' | 'unanswered'>('all');
-  const [selectedChapterCode, setSelectedChapterCode] = useState<string>('all');
-
   const { results, rawScore, maxScore, percentage } = evaluation;
 
+  // Calcul des questions échouées (erreurs + non répondues)
+  const failedResults = results.filter((item) => !item.isCorrect);
+  const hasFailures = failedResults.length > 0;
+
+  // Par défaut : afficher UNIQUEMENT les questions échouées si le candidat en a eu,
+  // sinon (100%) afficher toutes les questions
+  const [filterType, setFilterType] = useState<'failed' | 'all' | 'wrong' | 'correct' | 'unanswered'>(
+    hasFailures ? 'failed' : 'all'
+  );
+  const [selectedChapterCode, setSelectedChapterCode] = useState<string>('all');
+
   const filteredResults = results.filter((item) => {
+    if (filterType === 'failed' && item.isCorrect) return false;
     if (filterType === 'wrong' && (item.isCorrect || item.isUnanswered)) return false;
     if (filterType === 'correct' && !item.isCorrect) return false;
     if (filterType === 'unanswered' && !item.isUnanswered) return false;
@@ -61,7 +70,7 @@ export const CorrectionView: React.FC<CorrectionViewProps> = ({
         </div>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
           Correction détaillée
         </h1>
@@ -70,11 +79,76 @@ export const CorrectionView: React.FC<CorrectionViewProps> = ({
         </p>
       </div>
 
+      {/* Dynamic Banner & Primary Toggle (Show failed first, then button to show all) */}
+      {hasFailures ? (
+        <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
+            <div>
+              <div className="text-xs font-semibold text-slate-900">
+                {filterType === 'failed' || filterType === 'wrong' || filterType === 'unanswered'
+                  ? `Affichage prioritaire : vos ${failedResults.length} question(s) non réussie(s)`
+                  : `Affichage complet : l'ensemble des ${results.length} questions`}
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                {filterType === 'failed' || filterType === 'wrong' || filterType === 'unanswered'
+                  ? "Seules vos erreurs et questions sans réponse sont affichées en premier pour cibler votre révision."
+                  : "Toutes les questions (réussies et échouées) sont actuellement affichées."}
+              </p>
+            </div>
+          </div>
+
+          <button
+            id="btn-toggle-view-all-failed"
+            type="button"
+            onClick={() => setFilterType(filterType === 'all' ? 'failed' : 'all')}
+            className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors shrink-0 cursor-pointer shadow-xs"
+          >
+            {filterType === 'all'
+              ? `Voir uniquement mes erreurs (${failedResults.length})`
+              : `Voir toutes les réponses (${results.length})`}
+          </button>
+        </div>
+      ) : (
+        <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-slate-900 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-slate-900">
+                Score parfait (100%) !
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Aucune question échouée. Vous consultez ci-dessous l'ensemble des réponses exactes et leurs explications pédagogiques.
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-slate-900 text-white shrink-0">
+            {results.length}/{results.length} correctes
+          </span>
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-8 border-b border-slate-100">
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {hasFailures && (
+            <button
+              type="button"
+              id="tab-filter-failed"
+              onClick={() => setFilterType('failed')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                filterType === 'failed'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Échouées ({failedResults.length})
+            </button>
+          )}
+
           <button
             type="button"
+            id="tab-filter-all"
             onClick={() => setFilterType('all')}
             className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
               filterType === 'all'
@@ -85,20 +159,39 @@ export const CorrectionView: React.FC<CorrectionViewProps> = ({
             Toutes ({results.length})
           </button>
 
-          <button
-            type="button"
-            onClick={() => setFilterType('wrong')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
-              filterType === 'wrong'
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            Erreurs ({evaluation.wrongCount})
-          </button>
+          {evaluation.wrongCount > 0 && (
+            <button
+              type="button"
+              id="tab-filter-wrong"
+              onClick={() => setFilterType('wrong')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                filterType === 'wrong'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Erreurs ({evaluation.wrongCount})
+            </button>
+          )}
+
+          {evaluation.unansweredCount > 0 && (
+            <button
+              type="button"
+              id="tab-filter-unanswered"
+              onClick={() => setFilterType('unanswered')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                filterType === 'unanswered'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Sans réponse ({evaluation.unansweredCount})
+            </button>
+          )}
 
           <button
             type="button"
+            id="tab-filter-correct"
             onClick={() => setFilterType('correct')}
             className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
               filterType === 'correct'
@@ -107,18 +200,6 @@ export const CorrectionView: React.FC<CorrectionViewProps> = ({
             }`}
           >
             Correctes ({evaluation.correctCount})
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilterType('unanswered')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
-              filterType === 'unanswered'
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            Sans réponse ({evaluation.unansweredCount})
           </button>
         </div>
 
