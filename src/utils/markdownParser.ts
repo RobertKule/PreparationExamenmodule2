@@ -1,9 +1,36 @@
 import { Chapter, OptionKey, Question, QuestionOption } from '../types';
 
 /**
- * Metadata des titres de chapitres du Module 2 pour enrichir l'affichage
+ * Metadata des titres de chapitres des Modules 1 et 2 pour enrichir l'affichage
  */
 export const CHAPTER_METADATA: Record<string, { short: string; title: string }> = {
+  // Module 1 : Fondamentaux & Réglementation
+  '1.1': {
+    short: 'Chapitre 1.1',
+    title: 'Avertissement pédagogique'
+  },
+  '1.2': {
+    short: 'Chapitre 1.2',
+    title: 'Définitions et vocabulaire'
+  },
+  '1.3': {
+    short: 'Chapitre 1.3',
+    title: 'Familles de drones et classifications'
+  },
+  '1.4': {
+    short: 'Chapitre 1.4',
+    title: 'Usages et écosystème industriel'
+  },
+  '1.5': {
+    short: 'Chapitre 1.5',
+    title: 'Anatomie et architecture UAS'
+  },
+  '1.6': {
+    short: 'Chapitre 1.6',
+    title: 'Cadre réglementaire'
+  },
+
+  // Module 2 : Mécanique du vol, Propulsion & Systèmes
   '2.1': {
     short: 'Chapitre 2.1',
     title: 'Aérodynamique & Vol stationnaire (Théorie du disque)'
@@ -137,17 +164,18 @@ export function parseMarkdownQuiz(markdownText: string): ParseResult {
     }
 
     // 1. Détection d'un en-tête de chapitre
-    // Exemples : "2.1.11. Auto-évaluation", "2.10.12. Auto-évaluation", "## Chapitre 2.1"
+    // Exemples : "1.1. Auto-évaluation", "2.1.11. Auto-évaluation", "## Chapitre 1.3", etc.
     const chapterMatch =
-      trimmed.match(/^#*\s*(2\.\d+)(?:\.\d+)?\.?\s*(?:Auto-évaluation|Chapitre)?(.*)/i) ||
-      trimmed.match(/^#*\s*Chapitre\s*([0-9\.]+)(.*)/i);
+      trimmed.match(/^#*\s*(\d+\.\d+)(?:\.\d+)?\.?\s*(?:Auto-évaluation|Chapitre)?\s*(?:[-—–]\s*(.*))?/i) ||
+      trimmed.match(/^#*\s*Chapitre\s*([0-9\.]+)\s*(?:[-—–]\s*(.*))?/i);
 
     if (chapterMatch && !trimmed.toLowerCase().startsWith('question')) {
       commitCurrentChapter();
-      const codeBase = chapterMatch[1]; // ex: "2.1" ou "2.10"
+      const codeBase = chapterMatch[1]; // ex: "1.1", "2.1" ou "2.10"
+      const explicitSubtitle = chapterMatch[2]?.trim();
       const meta = CHAPTER_METADATA[codeBase] || {
         short: `Chapitre ${codeBase}`,
-        title: trimmed
+        title: explicitSubtitle || trimmed
       };
 
       currentChapter = {

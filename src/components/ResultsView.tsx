@@ -50,7 +50,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 
         <p className="text-sm text-slate-600 leading-relaxed max-w-2xl mb-6">
           {isPassed
-            ? `Félicitations. Vous avez atteint le seuil d'admissibilité de ${passThreshold}% sur le Module 2.`
+            ? `Félicitations. Vous avez atteint le seuil d'admissibilité de ${passThreshold}%${evaluation.moduleName ? ` sur le ${evaluation.moduleName}` : ''}.`
             : `Le score obtenu reste inférieur au seuil d'admissibilité de ${passThreshold}%. Révisez les notions clés ci-dessous avant de retenter l'examen.`}
         </p>
 

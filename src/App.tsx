@@ -1,12 +1,13 @@
 /**
- * Application complète de simulation d'examen Module 2 - Drone Knowledge Assessment
+ * Application complète de simulation d'examen Drone Knowledge Assessment
+ * Support multi-modules : Module 1, Module 2, et Examen Intégral (1+2)
  * @license Apache-2.0
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Chapter, OptionKey, Question, QuizConfig, QuizEvaluation } from './types';
-import { MODULE_2_MARKDOWN_SOURCE } from './data/rawMarkdown';
-import { evaluateQuizSession, loadModule2QuizData } from './utils/quizDataLoader';
+import { Chapter, ModuleId, OptionKey, Question, QuizConfig, QuizEvaluation } from './types';
+import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from './data/rawMarkdown';
+import { evaluateQuizSession, loadQuizDataForModule, MODULE_DEFINITIONS } from './utils/quizDataLoader';
 import { Navbar } from './components/Navbar';
 import { HomeView } from './components/HomeView';
 import { SetupView } from './components/SetupView';
@@ -16,22 +17,36 @@ import { CorrectionView } from './components/CorrectionView';
 import { SourceInspectorModal } from './components/SourceInspectorModal';
 
 export default function App() {
-  // 1. Source Markdown et données
-  const [markdownText, setMarkdownText] = useState<string>(MODULE_2_MARKDOWN_SOURCE);
+  // 1. Choix du module (Module 1 par défaut, ou Module 2, ou Tous)
+  const [selectedModuleId, setSelectedModuleId] = useState<ModuleId>('module-1');
+
+  // Surcharges éventuelles du markdown éditées par l'utilisateur
+  const [customMarkdownMap, setCustomMarkdownMap] = useState<Partial<Record<ModuleId, string>>>({});
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
 
-  // Parse les données du quiz à partir de la source
+  // Texte markdown actif correspondant au module choisi
+  const currentMarkdownText = useMemo(() => {
+    if (customMarkdownMap[selectedModuleId]) {
+      return customMarkdownMap[selectedModuleId]!;
+    }
+    if (selectedModuleId === 'module-1') return MODULE_1_MARKDOWN_SOURCE;
+    if (selectedModuleId === 'module-2') return MODULE_2_MARKDOWN_SOURCE;
+    return `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
+  }, [selectedModuleId, customMarkdownMap]);
+
+  // Parse les données du quiz à partir de la source du module actif
   const quizData = useMemo(() => {
-    return loadModule2QuizData(markdownText);
-  }, [markdownText]);
+    return loadQuizDataForModule(selectedModuleId, customMarkdownMap[selectedModuleId]);
+  }, [selectedModuleId, customMarkdownMap]);
 
   // 2. Navigation d'écrans : home, setup, quiz, results, correction
   const [currentView, setCurrentView] = useState<'home' | 'setup' | 'quiz' | 'results' | 'correction'>('home');
 
   // 3. Configuration de la session active
   const [currentConfig, setCurrentConfig] = useState<QuizConfig>({
+    moduleId: 'module-1',
     selectedChapterIds: [],
-    durationMinutes: 60,
+    durationMinutes: 30,
     passThresholdPercent: 85,
     shuffleQuestions: false
   });
@@ -41,7 +56,7 @@ export default function App() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, OptionKey>>({});
   const [flaggedIds, setFlaggedIds] = useState<Record<string, boolean>>({});
-  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(3600);
+  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(1800);
   const [timeSpentSeconds, setTimeSpentSeconds] = useState<number>(0);
   const [isQuizActive, setIsQuizActive] = useState<boolean>(false);
 
@@ -118,6 +133,12 @@ export default function App() {
     };
   }, [isQuizActive, currentConfig.durationMinutes]);
 
+  // Changement de module sélectionné
+  const handleSelectModule = (modId: ModuleId) => {
+    if (isQuizActive) return; // Ne pas interrompre un quiz en cours
+    setSelectedModuleId(modId);
+  };
+
   // Démarrer une session de quiz
   const handleStartQuiz = (config: QuizConfig) => {
     setCurrentConfig(config);
@@ -152,9 +173,10 @@ export default function App() {
     setCurrentView('quiz');
   };
 
-  // Démarrage rapide de tous les chapitres depuis l'accueil
+  // Démarrage rapide de tous les chapitres du module actif depuis l'accueil
   const handleQuickStartAll = (durationMinutes: number) => {
     handleStartQuiz({
+      moduleId: selectedModuleId,
       selectedChapterIds: quizData.chapters.map((c) => c.id),
       durationMinutes,
       passThresholdPercent: 85,
@@ -191,12 +213,15 @@ export default function App() {
   const handleSubmitQuiz = () => {
     setIsQuizActive(false);
 
+    const activeModInfo = MODULE_DEFINITIONS[selectedModuleId];
     const finalEvaluation = evaluateQuizSession(
       activeQuestions,
       userAnswers,
       currentConfig.passThresholdPercent,
       timeSpentSeconds,
-      currentConfig.durationMinutes
+      currentConfig.durationMinutes,
+      selectedModuleId,
+      activeModInfo?.name
     );
 
     setEvaluation(finalEvaluation);
@@ -207,12 +232,15 @@ export default function App() {
   const handleAutoSubmitOnTimeOut = () => {
     setIsQuizActive(false);
 
+    const activeModInfo = MODULE_DEFINITIONS[selectedModuleId];
     const finalEvaluation = evaluateQuizSession(
       activeQuestions,
       userAnswers,
       currentConfig.passThresholdPercent,
       currentConfig.durationMinutes * 60,
-      currentConfig.durationMinutes
+      currentConfig.durationMinutes,
+      selectedModuleId,
+      activeModInfo?.name
     );
 
     setEvaluation(finalEvaluation);
@@ -229,6 +257,8 @@ export default function App() {
       {/* Navbar principale */}
       <Navbar
         currentView={currentView}
+        selectedModuleId={selectedModuleId}
+        onSelectModule={handleSelectModule}
         onNavigateHome={() => setCurrentView('home')}
         onOpenSourceInspector={() => setIsInspectorOpen(true)}
         isQuizActive={isQuizActive}
@@ -238,6 +268,8 @@ export default function App() {
       <main className="flex-1">
         {currentView === 'home' && (
           <HomeView
+            selectedModuleId={selectedModuleId}
+            onSelectModule={handleSelectModule}
             chapters={quizData.chapters}
             totalQuestions={quizData.totalQuestions}
             onStartConfig={() => setCurrentView('setup')}
@@ -247,6 +279,7 @@ export default function App() {
 
         {currentView === 'setup' && (
           <SetupView
+            selectedModuleId={selectedModuleId}
             chapters={quizData.chapters}
             onStartQuiz={handleStartQuiz}
             onBackToHome={() => setCurrentView('home')}
@@ -292,12 +325,21 @@ export default function App() {
       <SourceInspectorModal
         isOpen={isInspectorOpen}
         onClose={() => setIsInspectorOpen(false)}
-        activeMarkdownText={markdownText}
+        activeMarkdownText={currentMarkdownText}
+        selectedModuleId={selectedModuleId}
+        onSelectModule={handleSelectModule}
         onApplyCustomMarkdown={(newText) => {
-          setMarkdownText(newText);
+          setCustomMarkdownMap((prev) => ({
+            ...prev,
+            [selectedModuleId]: newText
+          }));
         }}
         onResetDefaultMarkdown={() => {
-          setMarkdownText(MODULE_2_MARKDOWN_SOURCE);
+          setCustomMarkdownMap((prev) => {
+            const copy = { ...prev };
+            delete copy[selectedModuleId];
+            return copy;
+          });
         }}
       />
     </div>

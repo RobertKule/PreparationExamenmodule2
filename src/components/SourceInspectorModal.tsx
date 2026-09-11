@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Copy, RefreshCw, Upload, X } from 'lucide-react';
-import { MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
+import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
+import { ModuleId } from '../types';
 import { parseMarkdownQuiz, ParseResult } from '../utils/markdownParser';
+import { MODULE_DEFINITIONS } from '../utils/quizDataLoader';
 
 interface SourceInspectorModalProps {
   isOpen: boolean;
@@ -9,6 +11,8 @@ interface SourceInspectorModalProps {
   onApplyCustomMarkdown: (markdown: string) => void;
   onResetDefaultMarkdown: () => void;
   activeMarkdownText: string;
+  selectedModuleId: ModuleId;
+  onSelectModule?: (modId: ModuleId) => void;
 }
 
 export const SourceInspectorModal: React.FC<SourceInspectorModalProps> = ({
@@ -16,7 +20,9 @@ export const SourceInspectorModal: React.FC<SourceInspectorModalProps> = ({
   onClose,
   onApplyCustomMarkdown,
   onResetDefaultMarkdown,
-  activeMarkdownText
+  activeMarkdownText,
+  selectedModuleId,
+  onSelectModule
 }) => {
   const [editorText, setEditorText] = useState(activeMarkdownText);
   const [copied, setCopied] = useState(false);
@@ -24,7 +30,14 @@ export const SourceInspectorModal: React.FC<SourceInspectorModalProps> = ({
     parseMarkdownQuiz(activeMarkdownText)
   );
 
+  useEffect(() => {
+    setEditorText(activeMarkdownText);
+    setParseResult(parseMarkdownQuiz(activeMarkdownText));
+  }, [activeMarkdownText, isOpen]);
+
   if (!isOpen) return null;
+
+  const currentMod = MODULE_DEFINITIONS[selectedModuleId];
 
   const handleReanalyze = () => {
     const res = parseMarkdownQuiz(editorText);
@@ -37,9 +50,16 @@ export const SourceInspectorModal: React.FC<SourceInspectorModalProps> = ({
     onClose();
   };
 
+  const getDefaultSourceForCurrentModule = () => {
+    if (selectedModuleId === 'module-1') return MODULE_1_MARKDOWN_SOURCE;
+    if (selectedModuleId === 'module-2') return MODULE_2_MARKDOWN_SOURCE;
+    return `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
+  };
+
   const handleReset = () => {
-    setEditorText(MODULE_2_MARKDOWN_SOURCE);
-    setParseResult(parseMarkdownQuiz(MODULE_2_MARKDOWN_SOURCE));
+    const def = getDefaultSourceForCurrentModule();
+    setEditorText(def);
+    setParseResult(parseMarkdownQuiz(def));
     onResetDefaultMarkdown();
   };
 
@@ -69,11 +89,16 @@ export const SourceInspectorModal: React.FC<SourceInspectorModalProps> = ({
         {/* Header */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">
-              Fichier source Markdown
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Fichier source Markdown
+              </h2>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                {currentMod.badge}
+              </span>
+            </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Source de vérité pédagogique du Module 2
+              Source de vérité pédagogique du cours ({currentMod.name})
             </p>
           </div>
 

@@ -1,14 +1,43 @@
 import {
   Chapter,
   ChapterSummary,
+  ModuleId,
+  ModuleInfo,
   OptionKey,
   Question,
   QuestionResult,
   QuizEvaluation
 } from '../types';
 import { DEFAULT_ANSWER_KEYS } from '../data/defaultAnswerKeys';
-import { MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
+import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
 import { parseMarkdownQuiz, ParseResult } from './markdownParser';
+
+export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
+  'module-1': {
+    id: 'module-1',
+    name: 'Module 1 — Fondamentaux & Réglementation',
+    badge: 'Module 1',
+    subtitle: '6 chapitres • 30 questions',
+    description: 'Introduction, méthodologie, vocabulaire technique, familles de drones, écosystème industriel, architecture UAS et cadre réglementaire.',
+    defaultTimeMinutes: 30
+  },
+  'module-2': {
+    id: 'module-2',
+    name: 'Module 2 — Mécanique du vol & Systèmes',
+    badge: 'Module 2',
+    subtitle: '12 chapitres • 60 questions',
+    description: 'Aérodynamique, théorie du disque, commande sous-actionnée, repères & quaternions, moteurs brushless, asservissement PID, vibrations et simulation SITL.',
+    defaultTimeMinutes: 60
+  },
+  'module-all': {
+    id: 'module-all',
+    name: 'Examen Global — Modules 1 & 2',
+    badge: 'Modules 1 & 2',
+    subtitle: '18 chapitres • 90 questions',
+    description: 'Simulation complète regroupant toutes les épreuves des Modules 1 et 2 pour une évaluation exhaustive.',
+    defaultTimeMinutes: 90
+  }
+};
 
 const CUSTOM_ANSWER_STORAGE_KEY = 'drone_quiz_custom_answers';
 
@@ -41,10 +70,23 @@ export function saveAnswerOverride(chapterCode: string, questionNumber: number, 
 }
 
 /**
- * Charge l'ensemble des chapitres et questions du Module 2 avec leurs barèmes
+ * Charge les chapitres et questions pour le module choisi (Module 1, Module 2, ou Tous)
  */
-export function loadModule2QuizData(customMarkdown?: string): ParseResult {
-  const source = customMarkdown || MODULE_2_MARKDOWN_SOURCE;
+export function loadQuizDataForModule(
+  moduleId: ModuleId = 'module-1',
+  customMarkdown?: string
+): ParseResult {
+  let source: string;
+  if (customMarkdown) {
+    source = customMarkdown;
+  } else if (moduleId === 'module-1') {
+    source = MODULE_1_MARKDOWN_SOURCE;
+  } else if (moduleId === 'module-2') {
+    source = MODULE_2_MARKDOWN_SOURCE;
+  } else {
+    source = `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
+  }
+
   const parseResult = parseMarkdownQuiz(source);
   const overrides = getStoredAnswerOverrides();
 
@@ -71,6 +113,13 @@ export function loadModule2QuizData(customMarkdown?: string): ParseResult {
 }
 
 /**
+ * Rétro-compatibilité : charge l'ensemble du Module 2
+ */
+export function loadModule2QuizData(customMarkdown?: string): ParseResult {
+  return loadQuizDataForModule('module-2', customMarkdown);
+}
+
+/**
  * Calcule l'évaluation complète d'une session de quiz selon les règles officielles :
  * - Bonne réponse : +2 points
  * - Mauvaise réponse : -1 point
@@ -83,7 +132,9 @@ export function evaluateQuizSession(
   userAnswers: Record<string, OptionKey>,
   passThresholdPercent: number,
   timeSpentSeconds: number,
-  timeLimitMinutes: number
+  timeLimitMinutes: number,
+  moduleId?: ModuleId,
+  moduleName?: string
 ): QuizEvaluation {
   let rawScore = 0;
   let correctCount = 0;
@@ -192,6 +243,8 @@ export function evaluateQuizSession(
   const timeRemainingFormatted = `${remM}m ${remS.toString().padStart(2, '0')}s`;
 
   return {
+    moduleId,
+    moduleName,
     totalQuestions: questions.length,
     maxScore,
     rawScore,

@@ -1,5 +1,16 @@
 export type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E' | string;
 
+export type ModuleId = 'module-1' | 'module-2' | 'module-all';
+
+export interface ModuleInfo {
+  id: ModuleId;
+  name: string;
+  badge: string;
+  subtitle: string;
+  description: string;
+  defaultTimeMinutes: number;
+}
+
 export interface QuestionOption {
   key: OptionKey;
   text: string;
@@ -27,6 +38,7 @@ export interface Chapter {
 }
 
 export interface QuizConfig {
+  moduleId?: ModuleId;
   selectedChapterIds: string[]; // empty means all
   durationMinutes: number; // 30, 60, or custom
   passThresholdPercent: number; // default 85%
@@ -67,6 +79,8 @@ export interface ChapterSummary {
 }
 
 export interface QuizEvaluation {
+  moduleId?: ModuleId;
+  moduleName?: string;
   totalQuestions: number;
   maxScore: number;
   rawScore: number;

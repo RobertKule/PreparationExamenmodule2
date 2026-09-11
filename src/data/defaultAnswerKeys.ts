@@ -10,6 +10,146 @@ export interface AnswerKeyEntry {
  * Source officielle fournie par l'instructeur.
  */
 export const DEFAULT_ANSWER_KEYS: Record<string, AnswerKeyEntry> = {
+  // ==========================================
+  // MODULE 1 : Chapitres 1.1 à 1.6
+  // ==========================================
+
+  // Chapitre 1.1 — Avertissement pédagogique
+  '1.1-1': {
+    answer: 'A',
+    explanation: "Un chapitre en régime de conception traite son sujet jusqu'à l'équation et jusqu'à la source primaire car son contenu gouverne un dimensionnement ou une marge de sécurité."
+  },
+  '1.1-2': {
+    answer: 'C',
+    explanation: "Oublier le mot-clé return fait qu'une fonction renvoie une valeur vide, ce qui provoque un affichage de None."
+  },
+  '1.1-3': {
+    answer: 'B',
+    explanation: "La documentation professionnelle que vous consulterez tout au long de votre vie professionnelle est en anglais; utiliser des termes francisés vous obligerait à les désapprendre par la suite."
+  },
+  '1.1-4': {
+    answer: 'D',
+    explanation: "Pour obtenir le résultat exact en m², il faut d'abord convertir la mesure en mètres, diviser par deux pour obtenir le rayon en mètres, puis élever au carré le rayon et multiplier par π (S = π × r²)."
+  },
+  '1.1-5': {
+    answer: 'C',
+    explanation: "L'exécution du code ne prouve que l'absence de fautes de syntaxe, mais ne garantit absolument pas que le raisonnement ou la valeur finale soit exacte."
+  },
+
+  // Chapitre 1.2 — Définitions et vocabulaire
+  '1.2-1': {
+    answer: 'D',
+    explanation: "L'automatisme n'est pas l'autonomie au sens réglementaire. Du moment qu'un pilote peut intervenir ou reprendre les commandes à tout instant, l'appareil est un RPA au sein d'un RPAS (aéronef télépiloté)."
+  },
+  '1.2-2': {
+    answer: 'A',
+    explanation: "Le contact visuel en vue directe (VLOS) s'entend obligatoirement sur l'aéronef lui-même à l'œil nu et sans aide optique. Regarder l'image de la caméra embarquée ne constitue pas du VLOS, il s'agit donc d'une opération BVLOS (hors vue directe)."
+  },
+  '1.2-3': {
+    answer: 'C',
+    explanation: "UAS (Unmanned Aircraft System) est le terme le plus large. Il englobe les RPAS (systèmes télépilotés), les aéronefs autonomes et les aéronefs modèles, tandis que RPA désigne l'aéronef lui-même piloté à distance."
+  },
+  '1.2-4': {
+    answer: 'B',
+    explanation: "Dans un document destiné aux autorités réglementaires, il faut employer le terme normalisé (« station de pilotage à distance » ou RPS) plutôt que le vocabulaire d'atelier comme « station sol »."
+  },
+  '1.2-5': {
+    answer: 'C',
+    explanation: "L'origine historiquement établie du mot remonte à l'utilisation du terme « DRONE » comme nom de code militaire en 1936, et non comme un acronyme technique apparu ultérieurement sur le web."
+  },
+
+  // Chapitre 1.3 — Familles de drones et classifications
+  '1.3-1': {
+    answer: 'B',
+    explanation: "À encombrement fixé, multiplier les rotors réduit la surface totale de disque disponible (25% de surface en moins pour l'hexarotor). Comme la puissance nécessaire varie comme l'inverse de la racine carrée de cette surface, l'hexarotor consomme environ 16% de plus qu'un quadrirotor."
+  },
+  '1.3-2': {
+    answer: 'D',
+    explanation: "La voilure fixe produit sa portance par le déplacement d'une aile dans l'air. Elle ne peut pas s'arrêter en vol ni réaliser un vol stationnaire, ce qui la disqualifie d'emblée pour une inspection en point fixe."
+  },
+  '1.3-3': {
+    answer: 'A',
+    explanation: "Le facteur géométrique n sin²(π/n) découle d'une analyse purement géométrique sur un cercle de rayon donné, traduisant la surface totale de disque balayée en fonction du nombre de rotors."
+  },
+  '1.3-4': {
+    answer: 'C',
+    explanation: "L'architecture, la masse et la catégorie d'opération sont trois axes indépendants. La catégorie d'opération est évaluée selon le risque de la mission (ex: survol d'une foule vs. champ désert) et ne se déduit pas automatiquement de l'architecture ou de la masse de l'appareil."
+  },
+  '1.3-5': {
+    answer: 'B',
+    explanation: "L'intérêt majeur des architectures à 6 ou 8 rotors est la redondance motorisée. Le surcroît de consommation est le prix à payer pour assurer la survivabilité de l'appareil et protéger une charge utile de valeur en cas de panne moteur."
+  },
+
+  // Chapitre 1.4 — Usages et écosystème industriel
+  '1.4-1': {
+    answer: 'C',
+    explanation: "Deux bandes se recouvrant à 60% signale que chaque nouvelle bande n'apporte que son complément (100% - 60% = 40%) en largeur utile nouvelle, ce qui diminue la capacité de couverture de surface."
+  },
+  '1.4-2': {
+    answer: 'B',
+    explanation: "En épandage, la charge utile se vide au fil du vol, ce qui modifie continuellement la masse totale et le centrage de l'appareil (sans compter la résistance aux produits chimiques)."
+  },
+  '1.4-3': {
+    answer: 'D',
+    explanation: "Le client achète un résultat d'information (une orthophotographie, une carte multispectrale, un diagnostic thermique, etc.), le drone n'étant que l'outil porteur du capteur de mesure."
+  },
+  '1.4-4': {
+    answer: 'A',
+    explanation: "Le modèle ouvert permet la modification, l'adaptation et la réparation matérielle/logicielle en autonomie avec des composants accessibles, mais exige un effort d'intégration de la part du concepteur/développeur."
+  },
+  '1.4-5': {
+    answer: 'B',
+    explanation: "L'altitude et la chaleur réduisent la masse volumique de l'air (ρ), ce qui diminue directement la poussée produite par les hélices et engendre une perte de performance globale par rapport au niveau de la mer."
+  },
+
+  // Chapitre 1.5 — Anatomie et architecture UAS
+  '1.5-1': {
+    answer: 'C',
+    explanation: "Le segment liaison rassemble l'ensemble des chemins de données reliant le segment air et le segment sol. Il se décompose en trois flux distincts: commande et contrôle, télémétrie, et charge utile / vidéo."
+  },
+  '1.5-2': {
+    answer: 'A',
+    explanation: "La boucle d'attitude est la plus interne et tourne à la milliseconde. Elle exige un exécutant totalement déterministe. Un calculateur compagnon est puissant mais non déterministe (durée de calcul imprévisible); rater une échéance dans cette boucle peut faire basculer l'appareil."
+  },
+  '1.5-3': {
+    answer: 'D',
+    explanation: "Il faut raisonner par fonction et non par composant. La dérive en position traduit une dégradation de la fonction 'connaître son état', qui peut résulter d'un magnétomètre perturbé, de vibrations sur l'IMU ou d'un récepteur GNSS dégradé."
+  },
+  '1.5-4': {
+    answer: 'B',
+    explanation: "La plage usuelle pour une structure est de 15 à 25%. Atteindre 40% signale un surdimensionnement mécanique qui prive inutilement l'appareil d'emport pour la batterie ou la charge utile."
+  },
+  '1.5-5': {
+    answer: 'D',
+    explanation: "Les composants matériels évoluent et changent à chaque génération ou révision, tandis que l'architecture fonctionnelle reste constante et permet d'isoler efficacement les pannes."
+  },
+
+  // Chapitre 1.6 — Cadre réglementaire
+  '1.6-1': {
+    answer: 'A',
+    explanation: "Les normes et pratiques recommandées de l'OACI s'adressent aux États signataires de la convention de Chicago. Ce sont ensuite les textes nationaux adoptés par chaque État qui créent des obligations directes pour les exploitants."
+  },
+  '1.6-2': {
+    answer: 'C',
+    explanation: "La masse n'est pas le seul critère. Même pour un appareil très léger (< 1 kg), des conditions d'opération sensibles comme le survol de personnes ou le vol hors vue directe font immédiatement basculer l'opération dans un régime réglementaire exigeant."
+  },
+  '1.6-3': {
+    answer: 'B',
+    explanation: "La réglementation par l'objet s'appuie principalement sur les caractéristiques physiques de l'appareil (notamment sa masse maximale au décollage). La réglementation par le risque évalue l'environnement et l'impact opérationnel (ex. survol de foule ou zone déserte)."
+  },
+  '1.6-4': {
+    answer: 'D',
+    explanation: "La réglementation impose des fonctionnalités matérielles et logicielles (identification à distance, système de confinement, parachutes, etc.). Ces éléments ont un impact direct sur le budget de masse, l'encombrement et la consommation électrique de l'aéronef."
+  },
+  '1.6-5': {
+    answer: 'A',
+    explanation: "En vol hors vue directe (BVLOS) sur une longue distance, l'aéronef doit obligatoirement intégrer une détection fiable de la perte de liaison ainsi qu'une procédure de secours prévisible et documentée (retour au point de départ, atterrissage d'urgence, etc.)."
+  },
+
+  // ==========================================
+  // MODULE 2 : Chapitres 2.1 à 2.12
+  // ==========================================
+
   // 2.1.11 — Bilan des forces et théorie du disque sustentateur
   '2.1-1': {
     answer: 'B',

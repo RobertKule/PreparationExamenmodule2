@@ -604,3 +604,171 @@ s’observer qu’en vol réel.
 D. Les lois de la mécanique du vol, qu’elle remplace par un modèle simplifié sans
 valeur prédictive.
 `;
+
+/**
+ * Source de vérité du contenu pédagogique - Module 1 Formation Drone.
+ * Chapitres 1.1 à 1.6 (30 questions au total).
+ */
+export const MODULE_1_MARKDOWN_SOURCE = `1.1. Auto-évaluation — Avertissement pédagogique
+Question 1. Un chapitre porte la mention « régime de conception » dans son en-tête. Qu'est-ce que cela vous indique ?
+A. Que son contenu gouverne un dimensionnement, et qu'il sera traité jusqu'à l'équation et la source.
+B. Qu'il concerne le Module 5, seul module du programme consacré à la conception d'un appareil.
+C. Qu'il est réservé aux étudiants avancés et peut être sauté lors d'une première lecture du cours.
+D. Qu'il présente un projet à réaliser, dont le résultat sera évalué lors de la soutenance finale.
+Question 2. Vous exécutez un script qui affiche None au lieu du nombre attendu. Quelle est la cause la plus probable ?
+A. La version de Python installée est trop ancienne pour exécuter la fonction que vous avez écrite.
+B. Une virgule décimale à la française a été employée à la place du point dans une des valeurs.
+C. La fonction calcule le résultat mais ne le renvoie pas, le mot-clé return ayant été omis.
+D. Le fichier a été enregistré sous un nom qui entre en conflit avec un module de la bibliothèque.
+Question 3. Pourquoi le programme conserve-t-il les termes techniques en anglais plutôt que de les traduire ?
+A. Parce que la traduction française de ces termes n'existe pas et resterait donc incompréhensible.
+B. Parce que la documentation professionnelle est en anglais, et qu'un vocabulaire francisé serait à désapprendre.
+C. Parce que la réglementation internationale impose l'anglais dans toute documentation aéronautique.
+D. Parce que les termes anglais sont plus courts et allègent la lecture des chapitres les plus denses.
+Question 4. Vous devez calculer la surface balayée par une hélice de 15 pouces. Dans quel ordre effectuer les opérations?
+A. Élever au carré, puis convertir en mètres, puis diviser par deux, puis multiplier par pi.
+B. Convertir en mètres, puis élever au carré, puis multiplier par pi, puis diviser par deux.
+C. Diviser par deux, puis élever au carré, puis convertir en mètres, puis multiplier par pi.
+D. Convertir en mètres, puis diviser par deux, puis élever au carré, puis multiplier par pi.
+Question 5. Votre script s'exécute sans aucun message d'erreur. Que pouvez-vous en conclure ?
+A. Que le calcul est correct, l'absence d'erreur signalant que Python a validé les opérations.
+B. Que les unités employées sont cohérentes, Python vérifiant l'homogénéité des grandeurs.
+C. Que la syntaxe est correcte, sans aucune information sur l'exactitude du résultat obtenu.
+D. Que les fonctions renvoient bien une valeur, faute de quoi l'exécution se serait interrompue.
+
+1.2. Auto-évaluation — Définitions et vocabulaire
+Question 1. Un appareil exécute seul un plan de vol enregistré, et le télépilote peut interrompre la mission à tout instant depuis sa station. Comment se qualifie-t-il?
+A. En aéronef autonome, puisqu'il conduit son vol sans intervention humaine pendant la mission.
+B. En aéronef modèle, puisque la mission est enregistrée à l'avance et non commandée en direct.
+C. En UAS mais pas en RPAS, la notion de RPAS supposant un pilotage manuel continu de l'appareil.
+D. En RPA au sein d'un RPAS, la possibilité d'intervention du pilote étant le critère déterminant.
+Question 2. Un pilote vole en immersion et voit l'appareil uniquement par la caméra embarquée. Aucun observateur n'est présent. Quel est le mode d'opération?
+A. BVLOS, le contact visuel s'entendant sur l'aéronef lui-même et à l'oeil nu, sans aide.
+B. VLOS, puisque le pilote dispose à tout instant d'une vue directe et continue de la scène.
+C. EVLOS, le retour vidéo jouant le rôle d'extension du contact visuel du télépilote.
+D. Indéterminé, la qualification dépendant de la distance à laquelle se trouve l'appareil.
+Question 3. Quel rapport d'inclusion lie correctement les termes?
+A. UAS et RPAS désignent le même ensemble, le second étant simplement le terme européen.
+B. Le RPAS inclut l'UAS, qui inclut le RPA, lui-même sous-ensemble de l'aéronef sans équipage.
+C. L'UAS inclut les RPAS, les aéronefs autonomes et les aéronefs modèles, le RPA étant l'aéronef.
+D. L'UA inclut l'UAS, la partie volante contenant par définition les éléments qui lui sont associés.
+Question 4. Vous rédigez un dossier destiné à l'autorité de l'aviation civile. Comment désignez-vous le boîtier depuis lequel le télépilote conduit le vol?
+A. Station sol, terme employé par tous les fabricants et compris sans ambiguïté par les autorités.
+B. Station de pilotage à distance, terme normalisé, la station n'étant d'ailleurs pas toujours au sol.
+C. Ground control station, l'anglais étant la langue de référence de la documentation aéronautique.
+D. Radiocommande, terme qui décrit le plus fidèlement la fonction assurée par cet équipement.
+Question 5. Une page web attribue au mot drone une origine sous forme d'acronyme technique. Quelle démarche adopter?
+A. La retenir, plusieurs pages concordantes constituant une convergence de sources suffisante.
+B. La rejeter d'emblée, toute information trouvée en ligne étant par principe non recevable.
+C. La rejeter faute d'attestation ancienne, la plus vieille trace connue étant un nom de code.
+D. La retenir sous réserve, en la citant comme hypothèse tant qu'aucun document ne l'infirme.
+
+1.3. Auto-évaluation — Familles de drones et classifications
+Question 1. À encombrement et à masse identiques, comment se comparent un quadrirotor et un hexarotor en vol stationnaire?
+A. L'hexarotor consomme moins, la charge par rotor étant répartie sur six moteurs au lieu de quatre.
+B. L'hexarotor consomme environ 16% de plus, sa surface totale de disque étant plus faible de 25%.
+C. Les deux consomment autant, la surface totale de disque ne dépendant que de l'encombrement.
+D. L'hexarotor consomme environ 25% de plus, dans la proportion exacte de la surface perdue.
+Question 2. Une mission impose d'inspecter un pylône en restant immobile à 30 m du sol pendant vingt minutes. Quelle architecture est écartée en premier, et pourquoi ?
+A. Le VTOL, car sa transition entre régimes ne peut pas s'effectuer à proximité immédiate d'un obstacle.
+B. L'hexarotor, car sa consommation supérieure interdit une station prolongée de cette durée.
+C. Le quadrirotor, car l'absence de redondance est inacceptable lors d'un survol d'infrastructure.
+D. La voilure fixe, car elle ne peut pas maintenir une position fixe, sa portance exigeant l'avancement.
+Question 3. Que traduit exactement le facteur géométrique employé dans ce chapitre ?
+A. La surface de disque disponible pour un nombre de rotors donné, à encombrement imposé.
+B. Le rendement aérodynamique des hélices, qui se dégrade lorsque leur diamètre diminue.
+C. La marge de poussée résiduelle après la perte d'un moteur sur une architecture donnée.
+D. La masse de structure nécessaire pour porter un nombre croissant de bras et de moteurs.
+Question 4. Un appareil de 3 kg est un multirotor. Que pouvez-vous en déduire quant à la catégorie d'opération applicable?
+A. Qu'il relève de la catégorie ouverte, sa masse étant très inférieure au seuil réglementaire usuel.
+B. Qu'il relève de la catégorie spécifique, tout multirotor professionnel y étant systématiquement soumis.
+C. Rien, la catégorie dépendant du risque de l'opération et non de l'architecture ni de la seule masse.
+D. Qu'il dépend du seuil de 25 kg, lequel détermine à lui seul le régime applicable à l'appareil.
+Question 5. Pourquoi construit-on des octorotors alors qu'ils consomment davantage?
+A. Parce que la multiplication des rotors améliore la stabilité en rafale et la précision de position.
+B. Parce qu'ils tolèrent la perte d'un moteur, ce qui protège une charge utile ou un survol sensible.
+C. Parce qu'ils permettent d'emporter des hélices plus grandes et donc de gagner en autonomie.
+D. Parce que la réglementation impose la redondance au-delà d'un certain seuil de masse au décollage.
+
+1.4. Auto-évaluation — Usages et écosystème industriel
+Question 1. Une mission de cartographie exige un recouvrement latéral de 60% entre bandes voisines. Quel effet cela a-t-il sur la couverture ?
+A. Aucun sur la couverture, le recouvrement ne concernant que la qualité du modèle reconstruit.
+B. Il réduit la couverture de 60%, chaque bande étant survolée deux fois au lieu d'une seule.
+C. Il ramène la largeur utile à 40% de la largeur de bande, réduisant d'autant la couverture.
+D. Il augmente la durée de vol de 60%, sans modifier la surface finalement couverte au sol.
+Question 2. Quelle est la contrainte dominante d'une mission d'épandage agricole ?
+A. La précision de navigation, la trajectoire devant être régulière et l'altitude parfaitement constante.
+B. La variation de masse et de centrage en cours de vol, la charge utile se vidant pendant la mission.
+C. L'endurance, l'appareil devant rester en vol plusieurs heures pour couvrir une surface utile.
+D. La liaison à longue distance, l'appareil s'éloignant fortement de son point de mise en œuvre.
+Question 3. Pourquoi dit-on que la valeur d'une mission réside dans la donnée et non dans le vol?
+A. Parce que le vol est devenu banal et que sa réalisation n'a plus aucune difficulté technique.
+B. Parce que la réglementation interdit de facturer le survol et impose de facturer le produit livré.
+C. Parce que le coût du vol est négligeable devant celui du traitement des images enregistrées.
+D. Parce que le client achète une carte ou un diagnostic, l'appareil n'étant qu'un porteur de capteur.
+Question 4. Un projet doit être réparable localement, avec des pièces disponibles sur place. Quel modèle de l'écosystème privilégier, et à quel prix ?
+A. Le modèle ouvert, au prix d'un travail d'intégration et de mise au point qui incombe à l'équipe.
+B. Le modèle intégré, au prix d'une prise en main plus longue mais d'une fiabilité nettement accrue.
+C. Le modèle intégré, au prix d'un coût initial élevé compensé par la simplicité de la maintenance.
+D. Le modèle ouvert, au prix d'une fiabilité moindre imposée par des composants non qualifiés.
+Question 5. Un appareil dimensionné au niveau de la mer est exploité à 1300 m d'altitude par temps chaud. À quoi faut-il s'attendre ?
+A. À une autonomie inchangée, la masse volumique n'intervenant que dans la vitesse de croisière.
+B. À un déficit de performance, la masse volumique réduite diminuant la poussée disponible.
+C. À un gain de performance, l'air moins dense opposant une traînée plus faible à l'appareil.
+D. À un comportement identique, les contrôleurs compensant automatiquement l'effet d'altitude.
+
+1.5. Auto-évaluation — Anatomie et architecture UAS
+Question 1. Que recouvre exactement le segment liaison d'un système d'aéronef sans équipage?
+A. La liaison de commande, seul chemin de données dont dépend directement la sécurité du vol.
+B. L'ensemble des antennes embarquées, la partie au sol relevant du segment sol du système.
+C. Les trois chemins de données, commande et contrôle, télémétrie et charge utile, avec leurs antennes.
+D. La liaison vidéo, qui constitue le flux dominant en débit et donc l'essentiel du besoin en liaison.
+Question 2. Pourquoi ne place-t-on pas un calculateur compagnon puissant dans la boucle de stabilisation d'attitude?
+A. Parce que sa durée de traitement n'est pas garantie, alors que cette boucle a des échéances strictes.
+B. Parce que sa consommation électrique dépasse ce que la carte de distribution peut lui fournir.
+C. Parce qu'il ne dispose pas des liaisons matérielles nécessaires pour commander directement les ESC.
+D. Parce que sa fréquence de calcul est trop faible pour suivre le rythme des ordres du télépilote.
+Question 3. Un appareil dérive lentement en position par vent nul. Quel raisonnement adopter ?
+A. Remplacer le récepteur satellite, seul élément responsable de la connaissance de la position.
+B. Augmenter le gain du régulateur de position, la dérive traduisant une correction insuffisante.
+C. Alourdir l'appareil pour accroître son inertie et réduire sa sensibilité aux perturbations.
+D. Examiner la fonction de connaissance de l'état, que plusieurs causes distinctes peuvent dégrader.
+Question 4. Un budget de masse montre une structure représentant 40% de la masse au décollage. Qu'en conclure?
+A. Que l'appareil est particulièrement robuste, ce qui constitue un avantage pour un usage exigeant.
+B. Que cette masse est indisponible pour la charge utile et l'énergie, et qu'il faut en chercher la raison.
+C. Que le budget comporte une erreur, aucune structure ne pouvant atteindre une telle proportion.
+D. Que l'appareil est correctement dimensionné, la structure devant primer sur les autres postes.
+Question 5. Pourquoi décrire un appareil par fonctions plutôt que par composants?
+A. Parce que les composants sont trop nombreux pour être énumérés dans un document de conception.
+B. Parce que la réglementation impose une description fonctionnelle dans les dossiers d'autorisation.
+C. Parce que les fonctions sont plus faciles à expliquer à un client qui ne connaît pas la technique.
+D. Parce que les fonctions restent stables quand les composants changent, et guidant le diagnostic.
+
+1.6. Auto-évaluation — Cadre réglementaire
+Question 1. Quelle est la portée d'un document produit par l'Organisation de l'aviation civile internationale?
+A. Il s'adresse aux États, qui s'engagent à le transposer, et n'oblige pas directement l'exploitant.
+B. Il s'applique directement à tout exploitant, dans tous les États signataires de la convention.
+C. Il n'a qu'une valeur indicative et aucun État n'est tenu d'en reprendre les prescriptions.
+D. Il s'applique aux vols internationaux uniquement, le vol national relevant du seul droit local.
+Question 2. Un appareil de 900 g doit survoler un rassemblement de personnes. Que peut-on en dire ?
+A. Qu'il relève du régime le plus léger, sa masse étant très en deçà de tous les seuils usuels.
+B. Que la réglementation ne s'applique pas, les appareils sous un kilogramme en étant dispensés.
+C. Que la masse ne suffit pas à conclure, le survol de personnes relevant d'un régime exigeant.
+D. Que le survol est interdit sans exception, aucun aéronef sans équipage ne pouvant y procéder.
+Question 3. Qu'est-ce qui distingue une réglementation fondée sur le risque d'une réglementation fondée sur l'objet ?
+A. La première s'applique aux professionnels, la seconde aux usages de loisir et d'aéromodélisme.
+B. La première considère les conditions de l'opération, la seconde les caractéristiques de l'appareil.
+C. La première emploie des seuils de masse, la seconde des seuils de hauteur et de distance.
+D. La première relève de l'Organisation internationale, la seconde des autorités nationales.
+Question 4. Pourquoi la réglementation doit-elle être prise en compte dès le début de la conception?
+A. Parce que le dossier d'autorisation demande plusieurs mois et doit être déposé très en amont.
+B. Parce qu'elle interdit certaines architectures, dont le choix doit être arrêté dès le départ.
+C. Parce que l'autorité doit valider le cahier des charges avant tout commencement des travaux.
+D. Parce qu'elle produit des exigences techniques qui pèsent, occupent de la place et consomment.
+Question 5. Un vol hors vue directe est envisagé sur 40 km. Quelle exigence en découle directement pour l'aéronef?
+A. Un comportement défini et éprouvé en cas de perte de la liaison de commande et de contrôle.
+B. Une motorisation redondante, obligatoire au-delà d'une certaine distance de mise en œuvre.
+C. Une masse maximale au décollage inférieure au seuil réglementaire de l'État de l'opération.
+D. Un pilotage entièrement manuel, l'automatisme étant proscrit hors de la vue du télépilote.
+`;
+

@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Check, Play } from 'lucide-react';
-import { Chapter, QuizConfig } from '../types';
+import { Chapter, ModuleId, QuizConfig } from '../types';
+import { MODULE_DEFINITIONS } from '../utils/quizDataLoader';
 
 interface SetupViewProps {
+  selectedModuleId?: ModuleId;
   chapters: Chapter[];
   onStartQuiz: (config: QuizConfig) => void;
   onBackToHome: () => void;
 }
 
 export const SetupView: React.FC<SetupViewProps> = ({
+  selectedModuleId = 'module-1',
   chapters,
   onStartQuiz,
   onBackToHome
 }) => {
+  const currentMod = MODULE_DEFINITIONS[selectedModuleId];
   const [selectedIds, setSelectedIds] = useState<string[]>(chapters.map((c) => c.id));
-  const [duration, setDuration] = useState<number>(60);
+  const [duration, setDuration] = useState<number>(currentMod?.defaultTimeMinutes || 60);
   const [threshold, setThreshold] = useState<number>(85);
   const [shuffle, setShuffle] = useState<boolean>(false);
 
@@ -51,11 +55,112 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
   const handleStart = () => {
     onStartQuiz({
+      moduleId: selectedModuleId,
       selectedChapterIds: selectedIds,
       durationMinutes: duration,
       passThresholdPercent: threshold,
       shuffleQuestions: shuffle
     });
+  };
+
+  // Generate dynamic presets depending on module
+  const renderPresets = () => {
+    if (selectedModuleId === 'module-1') {
+      return (
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.map((c) => c.id))}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+              isAllSelected
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Tous les chapitres ({chapters.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(0, 3).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Partie 1 (1.1 à 1.3)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(3, 6).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Partie 2 (1.4 à 1.6)
+          </button>
+        </div>
+      );
+    }
+
+    if (selectedModuleId === 'module-2') {
+      return (
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.map((c) => c.id))}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+              isAllSelected
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Tous les chapitres (12)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(0, 6).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Aérodynamique (2.1 à 2.6)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(6, 12).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Systèmes & Contrôle (2.7 à 2.12)
+          </button>
+        </div>
+      );
+    }
+
+    // module-all
+    const mod1Chapters = chapters.filter((c) => c.code.startsWith('1.'));
+    const mod2Chapters = chapters.filter((c) => c.code.startsWith('2.'));
+    return (
+      <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+        <button
+          type="button"
+          onClick={() => setSelectedIds(chapters.map((c) => c.id))}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+            isAllSelected
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          Tous les chapitres ({chapters.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds(mod1Chapters.map((c) => c.id))}
+          className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+        >
+          Module 1 seul ({mod1Chapters.length} chapitres)
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds(mod2Chapters.map((c) => c.id))}
+          className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+        >
+          Module 2 seul ({mod2Chapters.length} chapitres)
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -68,16 +173,19 @@ export const SetupView: React.FC<SetupViewProps> = ({
           className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Retour à l'accueil</span>
+          <span>Retour au choix du module</span>
         </button>
       </div>
 
       <div className="mb-10">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+          {currentMod?.badge || 'Examen'}
+        </div>
         <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">
-          Paramètres de l'examen
+          Paramètres de l'examen — {currentMod?.name}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          Sélectionnez les chapitres à évaluer et personnalisez la session.
+          Sélectionnez les chapitres à évaluer et personnalisez les conditions de passage.
         </p>
       </div>
 
@@ -107,33 +215,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </div>
 
           {/* Quick presets */}
-          <div className="flex items-center gap-2 mb-4 text-xs">
-            <button
-              type="button"
-              onClick={() => setSelectedIds(chapters.map((c) => c.id))}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                isAllSelected
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Tous les chapitres (12)
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedIds(chapters.slice(0, 6).map((c) => c.id))}
-              className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-            >
-              Partie 1 (2.1 à 2.6)
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedIds(chapters.slice(6, 12).map((c) => c.id))}
-              className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-            >
-              Partie 2 (2.7 à 2.12)
-            </button>
-          </div>
+          {renderPresets()}
 
           {/* List of chapters (unbordered rows) */}
           <div className="divide-y divide-slate-100">
@@ -201,9 +283,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { label: '30 minutes', value: 30, desc: 'Rythme rapide' },
-              { label: '60 minutes', value: 60, desc: 'Standard conseillé' },
-              { label: '90 minutes', value: 90, desc: 'Approfondi' },
+              { label: '30 minutes', value: 30, desc: 'Rapide / Module 1' },
+              { label: '60 minutes', value: 60, desc: 'Standard / Module 2' },
+              { label: '90 minutes', value: 90, desc: 'Complet (1+2)' },
               { label: 'Illimité', value: 0, desc: 'Sans minuterie' }
             ].map((opt) => (
               <button
@@ -266,7 +348,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
-                Par chapitre (2.1 → 2.12)
+                Ordre du cours (1 → N)
               </button>
               <button
                 type="button"
@@ -313,7 +395,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             className="w-full sm:w-auto px-8 py-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition-colors inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Play className="w-4 h-4 fill-current" />
-            <span>Commencer l'examen</span>
+            <span>Commencer l'examen ({currentMod?.badge})</span>
           </button>
         </div>
       </div>
