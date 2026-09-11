@@ -28,6 +28,7 @@ interface QuizViewProps {
   onNavigateToQuestion: (index: number) => void;
   onSubmitQuiz: () => void;
   onAbandonQuiz?: () => void;
+  isPracticeMode?: boolean;
 }
 
 export const QuizView: React.FC<QuizViewProps> = ({
@@ -43,7 +44,8 @@ export const QuizView: React.FC<QuizViewProps> = ({
   onToggleFlag,
   onNavigateToQuestion,
   onSubmitQuiz,
-  onAbandonQuiz
+  onAbandonQuiz,
+  isPracticeMode = false
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState(false);
@@ -331,7 +333,7 @@ export const QuizView: React.FC<QuizViewProps> = ({
 
         {/* Clear response link */}
         {selectedAnswer && (
-          <div className="mb-8">
+          <div className="mb-6">
             <button
               type="button"
               onClick={() => onClearOption(currentQ.id)}
@@ -340,6 +342,36 @@ export const QuizView: React.FC<QuizViewProps> = ({
               <X className="w-3 h-3" />
               <span>Effacer la réponse (laisser vide, 0 pt)</span>
             </button>
+          </div>
+        )}
+
+        {/* Practice Mode Live Feedback (Requirement 8) */}
+        {isPracticeMode && selectedAnswer && (
+          <div className="mb-8 p-4 rounded-xl border transition-all text-xs space-y-2.5 bg-slate-50 border-slate-200">
+            <div className="flex items-center gap-2">
+              {selectedAnswer === currentQ.correctAnswer ? (
+                <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>Excellente réponse (+2 points)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-rose-800 font-semibold">
+                  <X className="w-4 h-4 text-rose-600" />
+                  <span>
+                    Réponse incorrecte (0 pt en entraînement) • Bonne réponse : {currentQ.correctAnswer}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {currentQ.explanation && (
+              <div className="pt-2 border-t border-slate-200 text-slate-700 leading-relaxed bg-white/70 p-3 rounded-lg border border-slate-100">
+                <span className="font-semibold text-slate-900 block mb-1">
+                  Explication pédagogique du cours :
+                </span>
+                {currentQ.explanation}
+              </div>
+            )}
           </div>
         )}
 

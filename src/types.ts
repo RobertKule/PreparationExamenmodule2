@@ -43,8 +43,26 @@ export interface QuizConfig {
   durationMinutes: number; // 30, 60, or custom
   passThresholdPercent: number; // default 85%
   shuffleQuestions: boolean;
+  shuffleAnswers?: boolean; // Mélange aléatoire des propositions A, B, C, D
   questionCountLimit?: number; // 0 for all, or 10, 20, 30
-  isPracticeMode?: boolean; // true: no penalty for wrong answers (0 pt)
+  isPracticeMode?: boolean; // true: pas de pénalité, explications directes
+  isCustomBank?: boolean;
+  customBankTitle?: string;
+}
+
+export interface QuizHistoryEntry {
+  id: string;
+  timestamp: number;
+  dateFormatted: string;
+  title: string;
+  totalQuestions: number;
+  rawScore: number;
+  maxScore: number;
+  percentage: number;
+  isPassed: boolean;
+  passThreshold: number;
+  timeSpentFormatted: string;
+  isPracticeMode?: boolean;
 }
 
 export interface QuizState {

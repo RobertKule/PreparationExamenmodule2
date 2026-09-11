@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Chapter, ModuleId, OptionKey, Question, QuizConfig, QuizEvaluation } from './types';
+import { Chapter, ModuleId, OptionKey, Question, QuizConfig, QuizEvaluation, QuizHistoryEntry } from './types';
 import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from './data/rawMarkdown';
 import { evaluateQuizSession, loadQuizDataForModule, MODULE_DEFINITIONS } from './utils/quizDataLoader';
 import { Navbar } from './components/Navbar';
@@ -15,6 +15,8 @@ import { QuizView } from './components/QuizView';
 import { ResultsView } from './components/ResultsView';
 import { CorrectionView } from './components/CorrectionView';
 import { SourceInspectorModal } from './components/SourceInspectorModal';
+import { CustomImportView } from './components/CustomImportView';
+import { clearLocalQuizHistory, getLocalQuizHistory, saveQuizResultToHistory } from './utils/historyStorage';
 
 export default function App() {
   // 1. Choix du module (Module 1 par défaut, ou Module 2, ou Tous)
@@ -23,6 +25,16 @@ export default function App() {
   // Surcharges éventuelles du markdown éditées par l'utilisateur
   const [customMarkdownMap, setCustomMarkdownMap] = useState<Partial<Record<ModuleId, string>>>({});
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
+
+  // Données de banque importée personnalisée (CSV ou Markdown)
+  const [customImportData, setCustomImportData] = useState<{
+    chapters: Chapter[];
+    questions: Question[];
+    bankTitle: string;
+  } | null>(null);
+
+  // Historique local des sessions
+  const [localHistory, setLocalHistory] = useState<QuizHistoryEntry[]>(() => getLocalQuizHistory());
 
   // Texte markdown actif correspondant au module choisi
   const currentMarkdownText = useMemo(() => {
@@ -39,8 +51,8 @@ export default function App() {
     return loadQuizDataForModule(selectedModuleId, customMarkdownMap[selectedModuleId]);
   }, [selectedModuleId, customMarkdownMap]);
 
-  // 2. Navigation d'écrans : home, setup, quiz, results, correction
-  const [currentView, setCurrentView] = useState<'home' | 'setup' | 'quiz' | 'results' | 'correction'>('home');
+  // 2. Navigation d'écrans : home, setup, quiz, results, correction, custom-import
+  const [currentView, setCurrentView] = useState<'home' | 'setup' | 'quiz' | 'results' | 'correction' | 'custom-import'>('home');
 
   // 3. Configuration de la session active
   const [currentConfig, setCurrentConfig] = useState<QuizConfig>({
@@ -48,7 +60,10 @@ export default function App() {
     selectedChapterIds: [],
     durationMinutes: 30,
     passThresholdPercent: 85,
-    shuffleQuestions: false
+    shuffleQuestions: false,
+    shuffleAnswers: false,
+    isPracticeMode: false,
+    isCustomBank: false
   });
 
   // 4. État de l'examen en cours
@@ -178,21 +193,68 @@ export default function App() {
     setSelectedModuleId(modId);
   };
 
+  // Vider l'historique local
+  const handleClearHistory = () => {
+    clearLocalQuizHistory();
+    setLocalHistory([]);
+  };
+
+  // Validation d'un import personnalisé
+  const handleCustomImportConfirm = (chapters: Chapter[], questions: Question[], bankTitle: string) => {
+    setCustomImportData({ chapters, questions, bankTitle });
+    setCurrentConfig({
+      moduleId: 'module-1',
+      selectedChapterIds: chapters.map((c) => c.id),
+      durationMinutes: Math.max(15, Math.ceil(questions.length * 1.5)),
+      passThresholdPercent: 85,
+      shuffleQuestions: false,
+      shuffleAnswers: false,
+      isPracticeMode: false,
+      isCustomBank: true,
+      customBankTitle: bankTitle
+    });
+    setCurrentView('setup');
+  };
+
   // Démarrer une session de quiz
   const handleStartQuiz = (config: QuizConfig) => {
     setCurrentConfig(config);
     setSessionCancellationNotice(null);
 
+    // Déterminer les chapitres sources (banque personnalisée ou modules standards)
+    const chaptersPool = (config.isCustomBank && customImportData)
+      ? customImportData.chapters
+      : quizData.chapters;
+
     // Filtrer les questions selon les chapitres choisis
-    const selectedChaps = quizData.chapters.filter((c) =>
+    const selectedChaps = chaptersPool.filter((c) =>
       config.selectedChapterIds.includes(c.id)
     );
 
     let questionsToUse = selectedChaps.flatMap((c) => c.questions);
 
     if (config.shuffleQuestions) {
-      // Mélange aléatoire avec Fisher-Yates
+      // Mélange aléatoire des questions
       questionsToUse = [...questionsToUse].sort(() => Math.random() - 0.5);
+    }
+
+    // Mélange aléatoire des propositions de réponses (Exigence 11)
+    if (config.shuffleAnswers) {
+      const optionKeys: OptionKey[] = ['A', 'B', 'C', 'D'];
+      questionsToUse = questionsToUse.map((q) => {
+        const correctText = q.options.find((o) => o.key === q.correctAnswer)?.text;
+        const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+        const newOptions = shuffledOptions.map((opt, idx) => ({
+          key: optionKeys[idx] || 'A',
+          text: opt.text
+        }));
+        const newCorrectKey = newOptions.find((o) => o.text === correctText)?.key || q.correctAnswer;
+        return {
+          ...q,
+          options: newOptions,
+          correctAnswer: newCorrectKey
+        };
+      });
     }
 
     // Appliquer la limite du nombre de questions si configurée (Exigence stepper)
@@ -226,7 +288,9 @@ export default function App() {
       durationMinutes,
       passThresholdPercent: 85,
       shuffleQuestions: false,
-      isPracticeMode: false
+      shuffleAnswers: false,
+      isPracticeMode: false,
+      isCustomBank: false
     });
   };
 
@@ -238,7 +302,10 @@ export default function App() {
       durationMinutes: Math.max(10, chapterIds.length * 4),
       passThresholdPercent: currentConfig.passThresholdPercent || 85,
       shuffleQuestions: false,
-      isPracticeMode: true // Mode entraînement sans pénalité pour favoriser l'apprentissage
+      shuffleAnswers: false,
+      isPracticeMode: true, // Mode entraînement sans pénalité pour favoriser l'apprentissage
+      isCustomBank: Boolean(currentConfig.isCustomBank),
+      customBankTitle: currentConfig.customBankTitle
     });
   };
 
@@ -267,8 +334,8 @@ export default function App() {
     }));
   };
 
-  // Soumission manuelle
-  const handleSubmitQuiz = () => {
+  // Enregistrement de l'évaluation et sauvegarde dans l'historique local (Exigences 15 & 16)
+  const recordEvaluationAndHistory = (spentSeconds: number, durationMins: number) => {
     setIsQuizActive(false);
 
     const activeModInfo = MODULE_DEFINITIONS[selectedModuleId];
@@ -276,35 +343,34 @@ export default function App() {
       activeQuestions,
       userAnswers,
       currentConfig.passThresholdPercent,
-      timeSpentSeconds,
-      currentConfig.durationMinutes,
+      spentSeconds,
+      durationMins,
       selectedModuleId,
-      activeModInfo?.name,
+      currentConfig.isCustomBank ? (currentConfig.customBankTitle || 'Banque Personnalisée') : activeModInfo?.name,
       Boolean(currentConfig.isPracticeMode)
     );
 
     setEvaluation(finalEvaluation);
+
+    // Sauvegarde automatique dans l'historique local (Exigence 16)
+    const titleOverride = currentConfig.isCustomBank
+      ? (currentConfig.customBankTitle || 'Test Personnalisé')
+      : activeModInfo?.name;
+
+    saveQuizResultToHistory(finalEvaluation, titleOverride, Boolean(currentConfig.isPracticeMode));
+    setLocalHistory(getLocalQuizHistory());
+
     setCurrentView('results');
+  };
+
+  // Soumission manuelle
+  const handleSubmitQuiz = () => {
+    recordEvaluationAndHistory(timeSpentSeconds, currentConfig.durationMinutes);
   };
 
   // Soumission automatique à l'expiration du temps
   const handleAutoSubmitOnTimeOut = () => {
-    setIsQuizActive(false);
-
-    const activeModInfo = MODULE_DEFINITIONS[selectedModuleId];
-    const finalEvaluation = evaluateQuizSession(
-      activeQuestions,
-      userAnswers,
-      currentConfig.passThresholdPercent,
-      currentConfig.durationMinutes * 60,
-      currentConfig.durationMinutes,
-      selectedModuleId,
-      activeModInfo?.name,
-      Boolean(currentConfig.isPracticeMode)
-    );
-
-    setEvaluation(finalEvaluation);
-    setCurrentView('results');
+    recordEvaluationAndHistory(currentConfig.durationMinutes * 60, currentConfig.durationMinutes);
   };
 
   // Recommencer le même quiz avec les mêmes questions
@@ -335,28 +401,48 @@ export default function App() {
         {currentView === 'home' && (
           <HomeView
             selectedModuleId={selectedModuleId}
-            onSelectModule={handleSelectModule}
+            onSelectModule={(modId) => {
+              setCustomImportData(null);
+              setCurrentConfig((prev) => ({ ...prev, isCustomBank: false, customBankTitle: undefined }));
+              handleSelectModule(modId);
+            }}
             chapters={quizData.chapters}
             totalQuestions={quizData.totalQuestions}
-            onStartConfig={() => setCurrentView('setup')}
+            onStartConfig={() => {
+              setCustomImportData(null);
+              setCurrentConfig((prev) => ({ ...prev, isCustomBank: false, customBankTitle: undefined }));
+              setCurrentView('setup');
+            }}
             onQuickStartAll={handleQuickStartAll}
             sessionCancellationNotice={sessionCancellationNotice}
             onDismissCancellationNotice={() => setSessionCancellationNotice(null)}
+            onNavigateToCustomImport={() => setCurrentView('custom-import')}
+            localHistory={localHistory}
+            onClearHistory={handleClearHistory}
+          />
+        )}
+
+        {currentView === 'custom-import' && (
+          <CustomImportView
+            onCancel={() => setCurrentView('home')}
+            onConfirmImport={handleCustomImportConfirm}
           />
         )}
 
         {currentView === 'setup' && (
           <SetupView
             selectedModuleId={selectedModuleId}
-            chapters={quizData.chapters}
+            chapters={(currentConfig.isCustomBank && customImportData) ? customImportData.chapters : quizData.chapters}
             onStartQuiz={handleStartQuiz}
             onBackToHome={() => setCurrentView('home')}
+            isCustomBank={Boolean(currentConfig.isCustomBank)}
+            customBankTitle={customImportData?.bankTitle}
           />
         )}
 
         {currentView === 'quiz' && activeQuestions.length > 0 && (
           <QuizView
-            chapters={quizData.chapters}
+            chapters={(currentConfig.isCustomBank && customImportData) ? customImportData.chapters : quizData.chapters}
             questions={activeQuestions}
             currentQuestionIndex={currentQuestionIndex}
             answers={userAnswers}
@@ -369,6 +455,7 @@ export default function App() {
             onNavigateToQuestion={setCurrentQuestionIndex}
             onSubmitQuiz={handleSubmitQuiz}
             onAbandonQuiz={() => cancelActiveSession("Vous avez choisi d'abandonner l'examen. La session a été annulée et aucune réponse n'a été enregistrée.")}
+            isPracticeMode={Boolean(currentConfig.isPracticeMode)}
           />
         )}
 

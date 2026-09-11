@@ -1,6 +1,6 @@
 {
-  "name": "Simulateur Examen Drone — Module 2",
-  "description": "Plateforme d'entraînement et simulation d'examen pour les Modules 1 et 2 de la formation télépilote drone (QCM, notation officielle +2/-1/0, minuterie et correction détaillée).",
+  "name": "Simulateur Examen Drone — Télépilote Professionnel",
+  "description": "Plateforme complète d'évaluation et de révision télépilote drone : modules officiels 1 et 2, import de banques personnalisées CSV/Markdown, modes examen et entraînement, export des résultats et historique local.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

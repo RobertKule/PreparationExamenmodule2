@@ -1,6 +1,19 @@
 import React from 'react';
-import { AlertCircle, ArrowRight, BookOpen, CheckCircle2, Clock, Layers, X } from 'lucide-react';
-import { Chapter, ModuleId } from '../types';
+import { 
+  AlertCircle, 
+  ArrowDown, 
+  ArrowRight, 
+  BookOpen, 
+  CheckCircle2, 
+  Clock, 
+  History, 
+  Layers, 
+  Sparkles, 
+  Trash2, 
+  X, 
+  XCircle 
+} from 'lucide-react';
+import { Chapter, ModuleId, QuizHistoryEntry } from '../types';
 import { MODULE_DEFINITIONS } from '../utils/quizDataLoader';
 
 interface HomeViewProps {
@@ -10,8 +23,11 @@ interface HomeViewProps {
   totalQuestions: number;
   onStartConfig: () => void;
   onQuickStartAll: (durationMinutes: number) => void;
+  onNavigateToCustomImport: () => void;
   sessionCancellationNotice?: string | null;
   onDismissCancellationNotice?: () => void;
+  localHistory?: QuizHistoryEntry[];
+  onClearHistory?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -21,8 +37,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
   totalQuestions,
   onStartConfig,
   onQuickStartAll,
+  onNavigateToCustomImport,
   sessionCancellationNotice,
-  onDismissCancellationNotice
+  onDismissCancellationNotice,
+  localHistory = [],
+  onClearHistory
 }) => {
   const currentMod = MODULE_DEFINITIONS[selectedModuleId];
   const advisedDuration = currentMod.defaultTimeMinutes;
@@ -55,6 +74,72 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
         </div>
       )}
+
+      {/* Two Clear Learning Paths (Requirement 1) */}
+      <div className="mb-10">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+          Choisir votre parcours d'évaluation
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Path 1: Existing Modules */}
+          <div
+            id="path-card-existing-modules"
+            className="p-5 rounded-2xl border border-slate-900 bg-white shadow-xs text-left relative flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white">
+                  Parcours 1 • Référentiel
+                </span>
+                <BookOpen className="w-4 h-4 text-slate-700" />
+              </div>
+              <h2 className="text-base font-semibold text-slate-900 mb-1">
+                Modules Spécialisés Officiels
+              </h2>
+              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                Pratiquez les questions officielles issues des Modules 1 et 2 (18 chapitres au total), avec explications du cours et barème officiel.
+              </p>
+            </div>
+
+            <div className="text-xs font-medium text-slate-800 inline-flex items-center gap-1.5 pt-2 border-t border-slate-100">
+              <span>Sélectionner un module ci-dessous</span>
+              <ArrowDown className="w-3.5 h-3.5 text-slate-600" />
+            </div>
+          </div>
+
+          {/* Path 2: Custom Test / Import */}
+          <div
+            id="path-card-custom-test"
+            className="p-5 rounded-2xl border border-slate-200 hover:border-slate-400 bg-white hover:bg-slate-50/40 transition-all text-left relative flex flex-col justify-between group"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-800">
+                  Parcours 2 • Sur-mesure
+                </span>
+                <Sparkles className="w-4 h-4 text-slate-700" />
+              </div>
+              <h2 className="text-base font-semibold text-slate-900 mb-1">
+                Créer un Test Personnalisé
+              </h2>
+              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                Importez votre propre banque de questions au format CSV (modèle fourni à télécharger) ou Markdown et configurez votre examen personnalisé.
+              </p>
+            </div>
+
+            <button
+              id="btn-home-create-custom-test"
+              type="button"
+              onClick={onNavigateToCustomImport}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors inline-flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Importer vos questions (CSV / MD)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Module Selector Segmented Cards */}
       <div className="mb-10">
@@ -218,6 +303,71 @@ export const HomeView: React.FC<HomeViewProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Local History Section (Requirement 16) */}
+      {localHistory.length > 0 && (
+        <div className="mb-10 pt-6 border-t border-slate-100">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-slate-700" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Historique local des sessions ({localHistory.length})
+              </h2>
+            </div>
+
+            {onClearHistory && (
+              <button
+                type="button"
+                id="btn-clear-history"
+                onClick={() => {
+                  if (window.confirm("Êtes-vous sûr de vouloir effacer l'historique de vos sessions locales ?")) {
+                    onClearHistory();
+                  }
+                }}
+                className="text-xs text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
+                title="Effacer tout l'historique de ce navigateur"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Effacer l'historique</span>
+              </button>
+            )}
+          </div>
+
+          <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
+            {localHistory.slice(0, 5).map((entry) => (
+              <div key={entry.id} className="p-3.5 flex items-center justify-between gap-3 text-xs">
+                <div>
+                  <div className="font-semibold text-slate-900">{entry.title}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    {entry.dateFormatted} • {entry.totalQuestions} questions • {entry.timeSpentFormatted}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <div className="font-mono font-semibold text-slate-900">
+                      {entry.percentage}%
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-mono">
+                      {entry.rawScore}/{entry.maxScore} pts
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                      entry.isPassed
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    }`}
+                  >
+                    {entry.isPassed ? 'Réussi' : 'Échec'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bottom CTA */}
       <div className="pt-2">

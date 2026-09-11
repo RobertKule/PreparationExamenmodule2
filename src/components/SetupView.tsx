@@ -7,10 +7,13 @@ import {
   Clock, 
   HelpCircle, 
   Layers, 
+  Minus,
   Play, 
+  Plus,
   RotateCcw, 
   Settings2, 
   ShieldCheck, 
+  Sliders,
   Sparkles 
 } from 'lucide-react';
 import { Chapter, ModuleId, QuizConfig } from '../types';
@@ -21,6 +24,8 @@ interface SetupViewProps {
   chapters: Chapter[];
   onStartQuiz: (config: QuizConfig) => void;
   onBackToHome: () => void;
+  isCustomBank?: boolean;
+  customBankTitle?: string;
 }
 
 const STEP_LABELS = [
@@ -35,9 +40,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
   selectedModuleId = 'module-1',
   chapters,
   onStartQuiz,
-  onBackToHome
+  onBackToHome,
+  isCustomBank = false,
+  customBankTitle
 }) => {
   const currentMod = MODULE_DEFINITIONS[selectedModuleId];
+  const displayTitle = isCustomBank ? (customBankTitle || 'Test Personnalisé') : currentMod?.name;
 
   // Stepper state (1 to 5)
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -45,10 +53,51 @@ export const SetupView: React.FC<SetupViewProps> = ({
   // Settings states
   const [questionCountLimit, setQuestionCountLimit] = useState<number>(0); // 0 = all
   const [selectedIds, setSelectedIds] = useState<string[]>(chapters.map((c) => c.id));
-  const [duration, setDuration] = useState<number>(currentMod?.defaultTimeMinutes || 60);
+  const initialDuration = isCustomBank 
+    ? Math.max(15, Math.ceil((chapters.reduce((acc, c) => acc + c.questions.length, 0) * 1.5))) 
+    : (currentMod?.defaultTimeMinutes || 60);
+
+  const [duration, setDuration] = useState<number>(initialDuration);
+  const [isCustomDuration, setIsCustomDuration] = useState<boolean>(
+    ![30, 60, 90, 0].includes(initialDuration)
+  );
+  const [customMinutesInput, setCustomMinutesInput] = useState<string>(
+    ![30, 60, 90, 0].includes(initialDuration) ? String(initialDuration) : '45'
+  );
+
+  const selectPresetDuration = (val: number) => {
+    setIsCustomDuration(false);
+    setDuration(val);
+  };
+
+  const activateCustomDuration = (initialVal?: number) => {
+    setIsCustomDuration(true);
+    const target = initialVal ?? (parseInt(customMinutesInput, 10) || 45);
+    const valid = Math.max(1, Math.min(360, target));
+    setDuration(valid);
+    setCustomMinutesInput(String(valid));
+  };
+
+  const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valStr = e.target.value;
+    setCustomMinutesInput(valStr);
+    const num = parseInt(valStr, 10);
+    if (!isNaN(num) && num > 0) {
+      setDuration(Math.min(360, Math.max(1, num)));
+    }
+  };
+
+  const adjustCustomMinutes = (delta: number) => {
+    const current = duration > 0 ? duration : (parseInt(customMinutesInput, 10) || 45);
+    const next = Math.max(1, Math.min(360, current + delta));
+    setIsCustomDuration(true);
+    setDuration(next);
+    setCustomMinutesInput(String(next));
+  };
   const [isPracticeMode, setIsPracticeMode] = useState<boolean>(false);
   const [threshold, setThreshold] = useState<number>(85);
   const [shuffle, setShuffle] = useState<boolean>(false);
+  const [shuffleAnswers, setShuffleAnswers] = useState<boolean>(false);
 
   const isAllSelected = selectedIds.length === chapters.length;
 
@@ -85,10 +134,15 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const handleApplyDefaults = () => {
     setQuestionCountLimit(0); // All questions
     setSelectedIds(chapters.map((c) => c.id));
-    setDuration(currentMod?.defaultTimeMinutes || 60);
+    setDuration(
+      isCustomBank
+        ? Math.max(15, Math.ceil(totalAvailableInSelectedChapters * 1.5))
+        : (currentMod?.defaultTimeMinutes || 60)
+    );
     setIsPracticeMode(false);
     setThreshold(85);
     setShuffle(false);
+    setShuffleAnswers(false);
     setCurrentStep(5); // Jump directly to final confirmation step
   };
 
@@ -99,13 +153,32 @@ export const SetupView: React.FC<SetupViewProps> = ({
       durationMinutes: duration,
       passThresholdPercent: threshold,
       shuffleQuestions: shuffle,
+      shuffleAnswers: shuffleAnswers,
       questionCountLimit: questionCountLimit,
-      isPracticeMode: isPracticeMode
+      isPracticeMode: isPracticeMode,
+      isCustomBank: isCustomBank,
+      customBankTitle: customBankTitle
     });
   };
 
   // Presets for Step 2
   const renderChapterPresets = () => {
+    if (isCustomBank) {
+      return (
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.map((c) => c.id))}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+              isAllSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Tous les thèmes importés ({chapters.length})
+          </button>
+        </div>
+      );
+    }
+
     if (selectedModuleId === 'module-1') {
       return (
         <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
@@ -458,13 +531,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 desc: 'Entraînez-vous sans contrainte de temps'
               }
             ].map((opt) => {
-              const isSelected = duration === opt.value;
+              const isSelected = !isCustomDuration && duration === opt.value;
               return (
                 <button
                   key={opt.value}
                   type="button"
                   id={`btn-step3-time-${opt.value}`}
-                  onClick={() => setDuration(opt.value)}
+                  onClick={() => selectPresetDuration(opt.value)}
                   className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
                     isSelected
                       ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
@@ -487,6 +560,129 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 </button>
               );
             })}
+          </div>
+
+          {/* Bouton & Interface pour mettre son temps voulu */}
+          <div
+            className={`p-4 rounded-xl border transition-all ${
+              isCustomDuration
+                ? 'border-slate-900 bg-white ring-1 ring-slate-900/10 shadow-xs'
+                : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <button
+                  type="button"
+                  id="btn-step3-time-custom"
+                  onClick={() => activateCustomDuration()}
+                  className="flex items-center gap-2 text-left cursor-pointer group"
+                >
+                  <Sliders className={`w-4 h-4 ${isCustomDuration ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-800'}`} />
+                  <span className="text-sm font-semibold text-slate-900">
+                    Définir mon temps voulu (personnalisé)
+                  </span>
+                </button>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Spécifiez une durée exacte en minutes selon vos objectifs d'entraînement.
+                </p>
+              </div>
+
+              {!isCustomDuration ? (
+                <button
+                  type="button"
+                  id="btn-activate-custom-time"
+                  onClick={() => activateCustomDuration()}
+                  className="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:border-slate-400 text-slate-700 text-xs font-semibold self-start sm:self-auto cursor-pointer transition-colors shadow-2xs"
+                >
+                  Choisir une durée libre
+                </button>
+              ) : (
+                <span className="px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-mono font-medium self-start sm:self-auto">
+                  {duration} minute{duration > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+
+            {/* Formulaire de saisie du temps voulu si actif */}
+            {isCustomDuration && (
+              <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <label htmlFor="input-custom-duration" className="text-xs font-medium text-slate-700">
+                    Temps souhaité :
+                  </label>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      id="btn-custom-time-minus-5"
+                      onClick={() => adjustCustomMinutes(-5)}
+                      className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 cursor-pointer transition-colors"
+                      title="- 5 minutes"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+
+                    <div className="relative flex items-center">
+                      <input
+                        id="input-custom-duration"
+                        type="number"
+                        min="1"
+                        max="360"
+                        value={customMinutesInput}
+                        onChange={handleCustomInputChange}
+                        className="w-24 px-3 py-1.5 text-center text-sm font-semibold font-mono rounded-lg border border-slate-300 focus:outline-hidden focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 bg-white"
+                        placeholder="Ex: 45"
+                      />
+                      <span className="ml-1.5 text-xs font-medium text-slate-500">min</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="btn-custom-time-plus-5"
+                      onClick={() => adjustCustomMinutes(5)}
+                      className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 cursor-pointer transition-colors"
+                      title="+ 5 minutes"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <span className="text-xs text-slate-400 hidden sm:inline ml-1">•</span>
+
+                  {/* Quick duration presets chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+                    {[15, 20, 45, 75, 120, 150].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        id={`btn-chip-time-${mins}`}
+                        onClick={() => activateCustomDuration(mins)}
+                        className={`px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                          duration === mins
+                            ? 'bg-slate-900 text-white font-semibold'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {mins} min
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>
+                    Équivaut à{' '}
+                    <strong className="text-slate-800">
+                      {Math.floor(duration / 60) > 0 ? `${Math.floor(duration / 60)} heure${Math.floor(duration / 60) > 1 ? 's' : ''} ` : ''}
+                      {duration % 60 > 0 ? `${duration % 60} minute${duration % 60 > 1 ? 's' : ''}` : ''}
+                    </strong>
+                    {duration < 60 && ` (${duration} minutes)`}.
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-3.5 rounded-lg bg-slate-50 text-xs text-slate-600 border border-slate-100">
@@ -598,7 +794,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
           {/* Question order */}
           <div>
             <div className="text-xs font-semibold text-slate-900 mb-2">
-              Ordre de défilement :
+              Ordre de défilement des questions :
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -627,6 +823,39 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Answer choices order (Requirement 11) */}
+          <div>
+            <div className="text-xs font-semibold text-slate-900 mb-2">
+              Ordre des propositions de réponses (A, B, C, D) :
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                id="btn-answers-sequential"
+                onClick={() => setShuffleAnswers(false)}
+                className={`p-3 rounded-lg text-xs font-medium border text-center transition-colors cursor-pointer ${
+                  !shuffleAnswers
+                    ? 'border-slate-900 bg-slate-100 text-slate-900 font-semibold'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Ordre standard
+              </button>
+              <button
+                type="button"
+                id="btn-answers-shuffle"
+                onClick={() => setShuffleAnswers(true)}
+                className={`p-3 rounded-lg text-xs font-medium border text-center transition-colors cursor-pointer ${
+                  shuffleAnswers
+                    ? 'border-slate-900 bg-slate-100 text-slate-900 font-semibold'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Mélanger les choix (A, B, C, D)
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -648,8 +877,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
           {/* Summary table */}
           <div className="p-5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3 text-xs">
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <span className="text-slate-500">Module sélectionné</span>
-              <span className="font-semibold text-slate-900">{currentMod.name}</span>
+              <span className="text-slate-500">Module / Sujet</span>
+              <span className="font-semibold text-slate-900">{displayTitle}</span>
             </div>
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <span className="text-slate-500">Nombre de questions</span>
@@ -675,10 +904,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 {isPracticeMode ? 'Entraînement (+2 / 0 pt)' : 'Officiel (+2 / -1 pt)'} • Seuil {threshold}%
               </span>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <span className="text-slate-500">Ordre des questions</span>
               <span className="font-semibold text-slate-900">
                 {shuffle ? 'Aléatoire (mélangé)' : 'Chronologique'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Ordre des propositions</span>
+              <span className="font-semibold text-slate-900">
+                {shuffleAnswers ? 'Aléatoire (A, B, C, D mélangés)' : 'Ordre initial'}
               </span>
             </div>
           </div>

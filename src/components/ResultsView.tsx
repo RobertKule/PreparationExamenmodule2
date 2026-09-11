@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { 
+  ArrowDown,
   ArrowRight, 
   BookOpen, 
   Check, 
   CheckCircle2, 
+  Download,
   HelpCircle, 
   Home, 
   Printer, 
@@ -12,6 +14,7 @@ import {
   XCircle 
 } from 'lucide-react';
 import { QuestionResult, QuizEvaluation } from '../types';
+import { exportResultsToCsv } from '../utils/csvParser';
 
 interface ResultsViewProps {
   evaluation: QuizEvaluation;
@@ -45,6 +48,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   } = evaluation;
 
   const reviewSectionRef = useRef<HTMLDivElement>(null);
+  const questionAnalysisRef = useRef<HTMLDivElement>(null);
 
   // Filter incorrect results and unanswered
   const incorrectResults = results.filter((r) => !r.isCorrect);
@@ -56,6 +60,10 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 
   const scrollToReview = () => {
     reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToQuestions = () => {
+    questionAnalysisRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleReviewRecommended = () => {
@@ -147,6 +155,28 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           </button>
 
           <button
+            id="btn-export-results-csv"
+            type="button"
+            onClick={() => exportResultsToCsv(evaluation)}
+            className="px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            title="Exporter les résultats détaillés au format CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-600" />
+            <span>Exporter CSV</span>
+          </button>
+
+          <button
+            id="btn-jump-to-answers"
+            type="button"
+            onClick={scrollToQuestions}
+            className="px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            title="Consulter l'analyse détaillée question par question"
+          >
+            <ArrowDown className="w-3.5 h-3.5 text-slate-600" />
+            <span>Voir les réponses détaillées</span>
+          </button>
+
+          <button
             type="button"
             onClick={() => window.print()}
             className="ml-auto text-slate-400 hover:text-slate-700 text-xs font-medium flex items-center gap-1 cursor-pointer p-2"
@@ -178,7 +208,81 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         </div>
       </div>
 
-      {/* 3. Recommandations Pédagogiques & Chapitres Identifiés */}
+      {/* 3. RÉCAPITULATIF & POINTS PAR CHAPITRE (Placé en premier à la fin de l'examen) */}
+      <div className="mb-10 p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 mb-4">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              Récapitulatif des points par chapitre
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Barème officiel : +2 pts par bonne réponse, -1 pt par erreur, 0 pt sans réponse.
+            </p>
+          </div>
+          <div className="text-xs font-mono text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md self-start sm:self-auto">
+            Total : <strong className="text-slate-900">{rawScore}</strong> / {maxScore} pts ({percentage}%)
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="text-slate-500 border-b border-slate-100 font-medium">
+              <tr>
+                <th className="py-2.5 pr-4">Chapitre / Thème</th>
+                <th className="py-2.5 text-center">Questions</th>
+                <th className="py-2.5 text-center text-emerald-700">Correctes</th>
+                <th className="py-2.5 text-center text-rose-700">Erreurs</th>
+                <th className="py-2.5 text-center text-slate-400">Vides</th>
+                <th className="py-2.5 text-right">Points</th>
+                <th className="py-2.5 text-right pl-4">Réussite</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {chapterSummaries.map((cs) => (
+                <tr key={cs.chapterId} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="py-2.5 pr-4 font-medium text-slate-900">
+                    <span className="font-semibold text-slate-900 mr-1.5">{cs.chapterCode}</span>
+                    <span className="text-slate-700">{cs.chapterTitle.replace(`${cs.chapterCode} — `, '')}</span>
+                  </td>
+                  <td className="py-2.5 text-center">{cs.totalQuestions}</td>
+                  <td className="py-2.5 text-center font-medium text-emerald-700">{cs.correctCount}</td>
+                  <td className="py-2.5 text-center font-medium text-rose-700">{cs.wrongCount}</td>
+                  <td className="py-2.5 text-center text-slate-400">{cs.unansweredCount}</td>
+                  <td className="py-2.5 text-right font-mono font-semibold text-slate-900">
+                    {cs.points} / {cs.maxPoints}
+                  </td>
+                  <td className="py-2.5 text-right pl-4">
+                    <span
+                      className={`inline-block font-semibold px-1.5 py-0.5 rounded text-[11px] ${
+                        cs.percentage >= passThreshold
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : cs.percentage >= 50
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      }`}
+                    >
+                      {cs.percentage}%
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="border-t-2 border-slate-200 bg-slate-50/70 font-semibold text-slate-900">
+              <tr>
+                <td className="py-2.5 pr-4 pl-1">Total général ({chapterSummaries.length} chapitres)</td>
+                <td className="py-2.5 text-center">{totalQuestions}</td>
+                <td className="py-2.5 text-center text-emerald-700">{correctCount}</td>
+                <td className="py-2.5 text-center text-rose-700">{wrongCount}</td>
+                <td className="py-2.5 text-center text-slate-500">{unansweredCount}</td>
+                <td className="py-2.5 text-right font-mono text-slate-900">{rawScore} / {maxScore} pts</td>
+                <td className="py-2.5 text-right pl-4 text-slate-900 font-bold">{percentage}%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      {/* 4. Recommandations Pédagogiques & Chapitres Identifiés */}
       <div className="mb-10 pb-8 border-b border-slate-100" ref={reviewSectionRef}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -223,8 +327,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         )}
       </div>
 
-      {/* 4. Revue détaillée des erreurs (Requirement 4) */}
-      <div className="mb-10">
+      {/* 5. Revue détaillée des erreurs & réponses (Requirement 4) */}
+      <div className="mb-10 pt-6 border-t border-slate-100" ref={questionAnalysisRef}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 mb-6">
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -364,47 +468,6 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             })}
           </div>
         )}
-      </div>
-
-      {/* 5. Summary Table per Chapter */}
-      <div className="mb-10 pt-6 border-t border-slate-100">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-          Récapitulatif par chapitre
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="text-slate-500 border-b border-slate-100 font-medium">
-              <tr>
-                <th className="py-2.5 pr-4">Chapitre</th>
-                <th className="py-2.5 text-center">Total</th>
-                <th className="py-2.5 text-center">Correctes</th>
-                <th className="py-2.5 text-center">Erreurs</th>
-                <th className="py-2.5 text-center">Vides</th>
-                <th className="py-2.5 text-right">Points</th>
-                <th className="py-2.5 text-right pl-4">Note</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {chapterSummaries.map((cs) => (
-                <tr key={cs.chapterId} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-2.5 pr-4 font-medium text-slate-900">
-                    {cs.chapterCode} — {cs.chapterTitle.replace(`${cs.chapterCode} — `, '')}
-                  </td>
-                  <td className="py-2.5 text-center">{cs.totalQuestions}</td>
-                  <td className="py-2.5 text-center">{cs.correctCount}</td>
-                  <td className="py-2.5 text-center">{cs.wrongCount}</td>
-                  <td className="py-2.5 text-center text-slate-400">{cs.unansweredCount}</td>
-                  <td className="py-2.5 text-right font-mono font-medium text-slate-900">
-                    {cs.points} / {cs.maxPoints}
-                  </td>
-                  <td className="py-2.5 text-right pl-4 font-semibold text-slate-900">
-                    {cs.percentage}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
 
       {/* Bottom Actions */}
