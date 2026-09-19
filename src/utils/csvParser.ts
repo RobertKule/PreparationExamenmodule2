@@ -146,7 +146,7 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
 
   const seenIds = new Map<string, number>();
   const parsedQuestions: Question[] = [];
-  const chapterMap = new Map<string, { code: string; title: string; questions: Question[] }>();
+  const chapterMap = new Map<string, { code: string; title: string; shortTitle?: string; questions: Question[] }>();
 
   // Parcourir les lignes de données
   for (let lineNum = headerIndex + 2; lineNum <= rawLines.length; lineNum++) {
@@ -209,16 +209,40 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
 
     // Si pas d'erreurs critiques sur cette ligne, construire l'objet Question
     if (questionText && optA && optB && optC && optD && rawCorrect && ['A', 'B', 'C', 'D'].includes(rawCorrect)) {
-      const chapterId = `custom-ch-${chapterRef.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-      const questionNumber = parsedQuestions.length + 1;
+      const numMatch = chapterRef.match(/^([0-9]+(?:\.[0-9]+)*)\s*(?:[-—:\.]\s*)?(.*)$/);
+      let chapCode = chapterRef;
+      let chapTitle = chapterRef.startsWith('Thème') ? chapterRef : `Thème ${chapterRef}`;
+      let chapShortTitle = chapTitle;
+      let chapterId = `ch-${chapterRef.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
+      if (numMatch) {
+        chapCode = numMatch[1];
+        const rawLabel = numMatch[2]?.trim() || '';
+        chapTitle = rawLabel ? `${chapCode} — ${rawLabel}` : `Chapitre ${chapCode}`;
+        chapShortTitle = `Chapitre ${chapCode}`;
+        chapterId = `ch-${chapCode.replace(/\./g, '-')}`;
+      }
+
+      if (!chapterMap.has(chapterId)) {
+        chapterMap.set(chapterId, {
+          code: chapCode,
+          title: chapTitle,
+          shortTitle: chapShortTitle,
+          questions: []
+        });
+      }
+
+      const currentChapQuestions = chapterMap.get(chapterId)!.questions.length;
+      const chapterQuestionNumber = currentChapQuestions + 1;
+      const globalNumber = parsedQuestions.length + 1;
 
       const q: Question = {
-        id: idVal,
+        id: `q-csv-${chapCode.replace(/\./g, '-')}-${idVal}`,
         chapterId: chapterId,
-        chapterNumber: chapterRef,
-        chapterTitle: `Thème ${chapterRef}`,
-        questionNumber: questionNumber,
-        globalIndex: questionNumber,
+        chapterNumber: chapCode,
+        chapterTitle: chapTitle,
+        questionNumber: chapterQuestionNumber,
+        globalIndex: globalNumber,
         text: questionText,
         options: [
           { key: 'A', text: optA },
@@ -231,14 +255,6 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
       };
 
       parsedQuestions.push(q);
-
-      if (!chapterMap.has(chapterId)) {
-        chapterMap.set(chapterId, {
-          code: chapterRef,
-          title: `Thème ${chapterRef}`,
-          questions: []
-        });
-      }
       chapterMap.get(chapterId)!.questions.push(q);
     }
   }
@@ -252,7 +268,7 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
     id: chId,
     code: data.code,
     title: data.title,
-    shortTitle: `Thème ${data.code}`,
+    shortTitle: (data as any).shortTitle || `Chapitre ${data.code}`,
     questions: data.questions
   }));
 

@@ -1,6 +1,7 @@
 import {
   Chapter,
   ChapterSummary,
+  ExamStatus,
   ModuleId,
   ModuleInfo,
   OptionKey,
@@ -10,7 +11,9 @@ import {
 } from '../types';
 import { DEFAULT_ANSWER_KEYS } from '../data/defaultAnswerKeys';
 import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
+import { MODULE_5_CSV_SOURCE } from '../data/module5Csv';
 import { parseMarkdownQuiz, ParseResult } from './markdownParser';
+import { parseAndValidateCsv } from './csvParser';
 
 export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
   'module-1': {
@@ -29,13 +32,21 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
     description: 'Aérodynamique, théorie du disque, commande sous-actionnée, repères & quaternions, moteurs brushless, asservissement PID, vibrations et simulation SITL.',
     defaultTimeMinutes: 60
   },
+  'module-5': {
+    id: 'module-5',
+    name: 'Module 5 — Conception, Propulsion & Dimensionnement',
+    badge: 'Module 5',
+    subtitle: '6 chapitres • 115 questions',
+    description: 'Cahier des charges, cycle de conception, bilan de masse & centrage, dimensionnement propulsion & énergie, études de cas voilure fixe/VTOL, nomenclature & montage.',
+    defaultTimeMinutes: 75
+  },
   'module-all': {
     id: 'module-all',
-    name: 'Examen Global — Modules 1 & 2',
-    badge: 'Modules 1 & 2',
-    subtitle: '18 chapitres • 90 questions',
-    description: 'Simulation complète regroupant toutes les épreuves des Modules 1 et 2 pour une évaluation exhaustive.',
-    defaultTimeMinutes: 90
+    name: 'Examen Global — Tous les Modules (1, 2 & 5)',
+    badge: 'Modules 1, 2 & 5',
+    subtitle: '24 chapitres • 205 questions',
+    description: 'Simulation complète et exhaustive regroupant l\'ensemble des épreuves officielles des Modules 1, 2 et 5.',
+    defaultTimeMinutes: 120
   }
 };
 
@@ -70,21 +81,75 @@ export function saveAnswerOverride(chapterCode: string, questionNumber: number, 
 }
 
 /**
- * Charge les chapitres et questions pour le module choisi (Module 1, Module 2, ou Tous)
+ * Charge les chapitres et questions pour le module choisi (Module 1, Module 2, Module 5 ou Tous)
  */
 export function loadQuizDataForModule(
   moduleId: ModuleId = 'module-1',
-  customMarkdown?: string
+  customSource?: string
 ): ParseResult {
+  // Module 5 (intégré à partir du fichier CSV officiel)
+  if (moduleId === 'module-5') {
+    const csvContent = customSource || MODULE_5_CSV_SOURCE;
+    const csvResult = parseAndValidateCsv(csvContent);
+    return {
+      chapters: csvResult.chapters,
+      allQuestions: csvResult.allQuestions,
+      totalQuestions: csvResult.totalQuestions,
+      errors: csvResult.errors,
+      warnings: csvResult.warnings
+    };
+  }
+
+  // Module Global (combinaison ordonnée des modules 1, 2 et 5)
+  if (moduleId === 'module-all') {
+    const m1m2Source = customSource || `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
+    const m1m2Result = parseMarkdownQuiz(m1m2Source);
+    const overrides = getStoredAnswerOverrides();
+
+    for (const chapter of m1m2Result.chapters) {
+      for (const q of chapter.questions) {
+        const lookupKey = `${chapter.code}-${q.questionNumber}`;
+        const defaultEntry = DEFAULT_ANSWER_KEYS[lookupKey];
+        if (overrides[lookupKey]) {
+          q.correctAnswer = overrides[lookupKey];
+        } else if (!q.correctAnswer && defaultEntry) {
+          q.correctAnswer = defaultEntry.answer;
+        }
+        if (!q.explanation && defaultEntry) {
+          q.explanation = defaultEntry.explanation;
+        }
+      }
+    }
+
+    const m5Result = parseAndValidateCsv(MODULE_5_CSV_SOURCE);
+    const allChapters = [...m1m2Result.chapters, ...m5Result.chapters];
+    const allQuestions: Question[] = [];
+    let gIdx = 1;
+
+    for (const ch of allChapters) {
+      for (const q of ch.questions) {
+        q.globalIndex = gIdx++;
+        allQuestions.push(q);
+      }
+    }
+
+    return {
+      chapters: allChapters,
+      allQuestions,
+      totalQuestions: allQuestions.length,
+      errors: [...(m1m2Result.errors || []), ...m5Result.errors],
+      warnings: [...m1m2Result.warnings, ...m5Result.warnings]
+    };
+  }
+
+  // Module 1 ou Module 2 (Markdown)
   let source: string;
-  if (customMarkdown) {
-    source = customMarkdown;
+  if (customSource) {
+    source = customSource;
   } else if (moduleId === 'module-1') {
     source = MODULE_1_MARKDOWN_SOURCE;
-  } else if (moduleId === 'module-2') {
-    source = MODULE_2_MARKDOWN_SOURCE;
   } else {
-    source = `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
+    source = MODULE_2_MARKDOWN_SOURCE;
   }
 
   const parseResult = parseMarkdownQuiz(source);
@@ -120,12 +185,20 @@ export function loadModule2QuizData(customMarkdown?: string): ParseResult {
 }
 
 /**
+ * Charge l'ensemble du Module 5 depuis le CSV officiel
+ */
+export function loadModule5QuizData(customCsv?: string): ParseResult {
+  return loadQuizDataForModule('module-5', customCsv);
+}
+
+/**
  * Calcule l'évaluation complète d'une session de quiz selon les règles officielles :
  * - Bonne réponse : +2 points
- * - Mauvaise réponse : -1 point
+ * - Mauvaise réponse : -1 point (ou 0 en mode entraînement)
  * - Aucune réponse : 0 point
  * - Note max : Total questions × 2
  * - Pourcentage : (score brut / note max) × 100
+ * - Supporte l'état normal ('COMPLETED') et l'état prématuré ('INTERRUPTED')
  */
 export function evaluateQuizSession(
   questions: Question[],
@@ -135,13 +208,15 @@ export function evaluateQuizSession(
   timeLimitMinutes: number,
   moduleId?: ModuleId,
   moduleName?: string,
-  isPracticeMode: boolean = false
+  isPracticeMode: boolean = false,
+  status: ExamStatus = 'COMPLETED'
 ): QuizEvaluation {
   let rawScore = 0;
   let correctCount = 0;
   let wrongCount = 0;
   let unansweredCount = 0;
 
+  const isInterrupted = status === 'INTERRUPTED';
   const results: QuestionResult[] = [];
   const chapterMap: Record<string, {
     chapter: Chapter | { id: string; code: string; title: string };
@@ -207,7 +282,8 @@ export function evaluateQuizSession(
 
   const maxScore = questions.length * 2;
   const percentage = maxScore > 0 ? Math.round(((rawScore / maxScore) * 100) * 10) / 10 : 0;
-  const isPassed = percentage >= passThresholdPercent;
+  const isPassed = !isInterrupted && percentage >= passThresholdPercent;
+  const answeredCount = correctCount + wrongCount;
 
   const chapterSummaries: ChapterSummary[] = Object.values(chapterMap).map((item) => {
     const chapMax = item.total * 2;
@@ -247,6 +323,8 @@ export function evaluateQuizSession(
   return {
     moduleId,
     moduleName,
+    status,
+    isInterrupted,
     totalQuestions: questions.length,
     maxScore,
     rawScore,
@@ -254,6 +332,7 @@ export function evaluateQuizSession(
     correctCount,
     wrongCount,
     unansweredCount,
+    answeredCount,
     isPassed,
     passThreshold: passThresholdPercent,
     timeSpentFormatted,

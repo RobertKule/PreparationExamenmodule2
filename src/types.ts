@@ -1,6 +1,8 @@
 export type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E' | string;
 
-export type ModuleId = 'module-1' | 'module-2' | 'module-all';
+export type ModuleId = 'module-1' | 'module-2' | 'module-5' | 'module-all';
+
+export type ExamStatus = 'IN_PROGRESS' | 'COMPLETED' | 'INTERRUPTED' | 'INTERROMPU';
 
 export interface ModuleInfo {
   id: ModuleId;
@@ -63,6 +65,9 @@ export interface QuizHistoryEntry {
   passThreshold: number;
   timeSpentFormatted: string;
   isPracticeMode?: boolean;
+  status?: ExamStatus;
+  isInterrupted?: boolean;
+  answeredCount?: number;
 }
 
 export interface QuizState {
@@ -73,6 +78,26 @@ export interface QuizState {
   targetEndTime: number | null;
   isCompleted: boolean;
   timeSpentSeconds: number;
+}
+
+export interface ActiveExamSession {
+  sessionId: string;
+  moduleId: ModuleId;
+  moduleName: string;
+  status: ExamStatus;
+  config: QuizConfig;
+  questions: Question[];
+  currentQuestionIndex: number;
+  answers: Record<string, OptionKey>;
+  flaggedIds: Record<string, boolean>;
+  startTime: number;
+  targetEndTime: number | null;
+  timeRemainingSeconds: number;
+  timeSpentSeconds: number;
+  totalTimeSeconds: number;
+  lastUpdatedTimestamp: number;
+  isCustomBank?: boolean;
+  customBankTitle?: string;
 }
 
 export interface QuestionResult {
@@ -101,6 +126,8 @@ export interface ChapterSummary {
 export interface QuizEvaluation {
   moduleId?: ModuleId;
   moduleName?: string;
+  status?: ExamStatus; // 'COMPLETED' | 'INTERRUPTED'
+  isInterrupted?: boolean;
   totalQuestions: number;
   maxScore: number;
   rawScore: number;
@@ -108,6 +135,7 @@ export interface QuizEvaluation {
   correctCount: number;
   wrongCount: number;
   unansweredCount: number;
+  answeredCount?: number;
   isPassed: boolean;
   passThreshold: number;
   timeSpentFormatted: string;

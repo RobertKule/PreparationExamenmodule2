@@ -1,6 +1,6 @@
 {
   "name": "Simulateur Examen Drone — Télépilote Professionnel",
-  "description": "Plateforme complète d'évaluation et de révision télépilote drone : modules officiels 1 et 2, import de banques personnalisées CSV/Markdown, modes examen et entraînement, export des résultats et historique local.",
+  "description": "Plateforme d'évaluation télépilote drone : Modules 1, 2 et 5 officiels (DGAC), import CSV/Markdown personnalisé, gestion des examens terminés et interrompus avec reprise, et analyse détaillée par chapitre.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

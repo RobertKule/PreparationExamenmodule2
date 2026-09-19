@@ -86,6 +86,7 @@ export interface ParseResult {
   allQuestions: Question[];
   totalQuestions: number;
   warnings: string[];
+  errors?: string[];
 }
 
 /**

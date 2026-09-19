@@ -1,6 +1,7 @@
-import { QuizEvaluation, QuizHistoryEntry } from '../types';
+import { ActiveExamSession, QuizEvaluation, QuizHistoryEntry } from '../types';
 
 const STORAGE_KEY = 'drone_quiz_history_v1';
+const ACTIVE_SESSION_KEY = 'drone_active_exam_session_v2';
 
 export function getLocalQuizHistory(): QuizHistoryEntry[] {
   try {
@@ -38,8 +39,10 @@ export function saveQuizResultToHistory(
       ? 'Module 1 : Fondamentaux'
       : evaluation.moduleId === 'module-2'
       ? 'Module 2 : Mécanique du vol'
+      : evaluation.moduleId === 'module-5'
+      ? 'Module 5 : Conception & Dimensionnement'
       : evaluation.moduleId === 'module-all'
-      ? 'Examen Intégral (1+2)'
+      ? 'Examen Intégral (1, 2 & 5)'
       : 'Session d\'évaluation');
 
   const newEntry: QuizHistoryEntry = {
@@ -54,7 +57,10 @@ export function saveQuizResultToHistory(
     isPassed: evaluation.isPassed,
     passThreshold: evaluation.passThreshold,
     timeSpentFormatted: evaluation.timeSpentFormatted,
-    isPracticeMode: isPracticeMode
+    isPracticeMode: isPracticeMode,
+    status: evaluation.status || 'COMPLETED',
+    isInterrupted: evaluation.isInterrupted ?? false,
+    answeredCount: evaluation.answeredCount ?? (evaluation.correctCount + evaluation.wrongCount)
   };
 
   try {
@@ -74,5 +80,40 @@ export function clearLocalQuizHistory(): void {
     localStorage.removeItem(STORAGE_KEY);
   } catch (err) {
     console.warn('Failed to clear quiz history:', err);
+  }
+}
+
+/**
+ * Gestion de la session d'examen active (Persistance pour éviter toute perte de progression)
+ */
+export function getStoredActiveExamSession(): ActiveExamSession | null {
+  try {
+    const raw = localStorage.getItem(ACTIVE_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && parsed.sessionId && Array.isArray(parsed.questions)) {
+      return parsed as ActiveExamSession;
+    }
+    return null;
+  } catch (err) {
+    console.warn('Impossible de lire la session active:', err);
+    return null;
+  }
+}
+
+export function saveActiveExamSession(session: ActiveExamSession): void {
+  try {
+    session.lastUpdatedTimestamp = Date.now();
+    localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(session));
+  } catch (err) {
+    console.warn('Erreur lors de la sauvegarde de la session active:', err);
+  }
+}
+
+export function clearStoredActiveExamSession(): void {
+  try {
+    localStorage.removeItem(ACTIVE_SESSION_KEY);
+  } catch (err) {
+    console.warn('Erreur lors de la suppression de la session active:', err);
   }
 }

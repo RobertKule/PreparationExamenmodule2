@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { 
+  AlertTriangle,
   ArrowDown,
   ArrowRight, 
   BookOpen, 
@@ -8,6 +9,7 @@ import {
   Download,
   HelpCircle, 
   Home, 
+  Play,
   Printer, 
   RotateCcw, 
   X, 
@@ -21,6 +23,8 @@ interface ResultsViewProps {
   onViewCorrection: () => void;
   onRetakeSameQuiz: () => void;
   onNewQuiz: () => void;
+  onResumeQuiz?: () => void;
+  canResume?: boolean;
   onReviewRecommendedChapters?: (chapterIds: string[]) => void;
 }
 
@@ -29,6 +33,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   onViewCorrection,
   onRetakeSameQuiz,
   onNewQuiz,
+  onResumeQuiz,
+  canResume = false,
   onReviewRecommendedChapters
 }) => {
   const {
@@ -44,8 +50,12 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     timeSpentFormatted,
     results,
     chapterSummaries,
-    weakestChapters
+    weakestChapters,
+    status
   } = evaluation;
+
+  const isInterrupted = status === 'INTERRUPTED' || status === 'INTERROMPU' || evaluation.isInterrupted;
+  const answeredCount = evaluation.answeredCount ?? (correctCount + wrongCount);
 
   const reviewSectionRef = useRef<HTMLDivElement>(null);
   const questionAnalysisRef = useRef<HTMLDivElement>(null);
@@ -78,50 +88,108 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     <div className="max-w-3xl mx-auto px-6 py-10 sm:py-12">
       {/* 1. Master Evaluation Card */}
       <div className="pb-8 border-b border-slate-100 mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Résultats de l'évaluation • {percentage === 100 ? 'Score parfait (100%)' : isPassed ? 'Examen validé' : 'Examen non validé'}
-          </span>
-          <span
-            className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
-              isPassed
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-800'
-            }`}
-          >
-            Seuil requis : {passThreshold}%
-          </span>
+        
+        {/* Status badges */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {isInterrupted ? (
+            <>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+                <span>Statut : INTERROMPU</span>
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                {evaluation.moduleName || 'Session d\'évaluation'}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-900 text-white">
+                <Check className="w-3.5 h-3.5" />
+                <span>Statut : TERMINÉ</span>
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                {percentage === 100 ? 'Score parfait (100%)' : isPassed ? 'Examen validé' : 'Examen non validé'}
+              </span>
+              <span
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
+                  isPassed
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-800'
+                }`}
+              >
+                Seuil requis : {passThreshold}%
+              </span>
+            </>
+          )}
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-4">
-          <h1 className="text-4xl sm:text-5xl font-semibold text-slate-900 tracking-tight">
-            {percentage}%
-          </h1>
-          <div className="text-sm font-mono text-slate-600">
-            Score : <strong className="text-slate-900">{rawScore}</strong> / {maxScore} points
+        {/* Big Headline */}
+        {isInterrupted ? (
+          <div className="mb-4">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-amber-950 tracking-tight mb-2">
+              EXAMEN INTERROMPU
+            </h1>
+            <p className="text-sm font-medium text-slate-700 leading-relaxed">
+              Vous avez quitté l'examen avant de répondre à toutes les questions. Votre résultat ci-dessous a été calculé exclusivement à partir des réponses enregistrées jusqu'au moment de l'interruption.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              Bilan de l'examen
+            </h1>
+          </div>
+        )}
+
+        {/* Score block */}
+        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 mb-6">
+          <div className="text-xs uppercase font-semibold text-slate-500 tracking-wider mb-1">
+            Votre résultat est :
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+            <div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight font-mono">
+                  {correctCount} / {totalQuestions}
+                </span>
+                <span className="text-2xl sm:text-3xl font-bold text-slate-700 font-mono">
+                  ({percentage} %)
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                {isInterrupted
+                  ? `${answeredCount} questions répondues sur ${totalQuestions} au total`
+                  : `${totalQuestions} questions évaluées`}
+              </div>
+            </div>
+
+            <div className="text-right sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
+              <div className="text-xs text-slate-500">Score barème officiel</div>
+              <div className="text-base font-bold font-mono text-slate-900">
+                {rawScore} / {maxScore} pts
+              </div>
+              <div className="text-[11px] text-slate-500">
+                (+2 pts / bonne rép., -1 pt / erreur)
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Personalized Message based on Pass/Fail (Requirement 4) */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 mb-6">
-          <p className="text-sm text-slate-800 leading-relaxed font-medium">
-            {percentage === 100
-              ? "Félicitations pour ce score parfait de 100% ! Vous maîtrisez l'ensemble des notions de cette évaluation."
-              : isPassed
-              ? "Félicitations ! Vous avez réussi cet examen. Continuez à réviser les notions pour consolider vos acquis."
-              : "Vous n'avez pas atteint le score requis cette fois-ci. Nous vous recommandons de revoir attentivement les chapitres concernés, en particulier les thèmes liés à vos erreurs, avant de retenter l'examen."}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            {percentage === 100
-              ? "Congratulations on a perfect score of 100%! You have mastered all topics covered in this evaluation."
-              : isPassed
-              ? "Congratulations! You have successfully completed this quiz. Continue reviewing key concepts to consolidate your knowledge."
-              : "You did not reach the required score this time. We recommend reviewing the relevant chapters carefully, especially the topics related to your incorrect answers, before attempting the quiz again."}
-          </p>
-        </div>
-
-        {/* Action buttons (Requirement 4) */}
+        {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {isInterrupted && canResume && onResumeQuiz && unansweredCount > 0 && (
+            <button
+              id="btn-resume-quiz"
+              type="button"
+              onClick={onResumeQuiz}
+              className="px-4 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors inline-flex items-center gap-2 cursor-pointer shadow-xs"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Reprendre cet examen ({unansweredCount} restantes)</span>
+            </button>
+          )}
+
           {chaptersWithErrorsIds.length > 0 && (
             <button
               id="btn-review-recommended"
@@ -141,7 +209,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             className="px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Retenter l'examen</span>
+            <span>Retenter l'épreuve</span>
           </button>
 
           <button
@@ -190,21 +258,23 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 
       {/* 2. Key Metrics List (Clean, flat) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 mb-8 text-sm">
-        <div className="p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-          <div className="text-xl font-semibold text-slate-900">{correctCount}</div>
-          <div className="text-xs text-slate-500 mt-0.5">Réponses correctes (+{correctCount * 2} pts)</div>
+        <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100">
+          <div className="text-2xl font-bold text-emerald-900 font-mono">{correctCount}</div>
+          <div className="text-xs text-emerald-700 mt-0.5 font-medium">Bonnes réponses (+{correctCount * 2} pts)</div>
         </div>
-        <div className="p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-          <div className="text-xl font-semibold text-slate-900">{wrongCount}</div>
-          <div className="text-xs text-slate-500 mt-0.5">Erreurs commises</div>
+        <div className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-100">
+          <div className="text-2xl font-bold text-rose-900 font-mono">{wrongCount}</div>
+          <div className="text-xs text-rose-700 mt-0.5 font-medium">Erreurs commises (-{wrongCount} pt)</div>
         </div>
-        <div className="p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-          <div className="text-xl font-semibold text-slate-900">{unansweredCount}</div>
-          <div className="text-xs text-slate-500 mt-0.5">Sans réponse (0 pt)</div>
+        <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200">
+          <div className="text-2xl font-bold text-slate-900 font-mono">{unansweredCount}</div>
+          <div className="text-xs text-slate-600 mt-0.5 font-medium">
+            {isInterrupted ? 'Questions restantes (0 pt)' : 'Sans réponse (0 pt)'}
+          </div>
         </div>
-        <div className="p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-          <div className="text-xl font-semibold text-slate-900 font-mono">{timeSpentFormatted}</div>
-          <div className="text-xs text-slate-500 mt-0.5">Temps écoulé</div>
+        <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200">
+          <div className="text-2xl font-bold text-slate-900 font-mono">{timeSpentFormatted}</div>
+          <div className="text-xs text-slate-600 mt-0.5 font-medium">Temps passé</div>
         </div>
       </div>
 
@@ -220,7 +290,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             </p>
           </div>
           <div className="text-xs font-mono text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md self-start sm:self-auto">
-            Total : <strong className="text-slate-900">{rawScore}</strong> / {maxScore} pts ({percentage}%)
+            Total : <strong className="text-slate-900">{rawScore}</strong> / {maxScore} pts ({percentage} %)
           </div>
         </div>
 
@@ -232,7 +302,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                 <th className="py-2.5 text-center">Questions</th>
                 <th className="py-2.5 text-center text-emerald-700">Correctes</th>
                 <th className="py-2.5 text-center text-rose-700">Erreurs</th>
-                <th className="py-2.5 text-center text-slate-400">Vides</th>
+                <th className="py-2.5 text-center text-slate-400">Restantes</th>
                 <th className="py-2.5 text-right">Points</th>
                 <th className="py-2.5 text-right pl-4">Réussite</th>
               </tr>
@@ -321,7 +391,9 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-slate-900 shrink-0" />
             <span>
-              Parfaite maîtrise des thèmes abordés ! Vous n'avez commis aucune erreur sur les chapitres évalués.
+              {isInterrupted
+                ? "Aucune erreur constatée parmi les questions auxquelles vous avez répondu."
+                : "Parfaite maîtrise des thèmes abordés ! Vous n'avez commis aucune erreur sur les chapitres évalués."}
             </span>
           </div>
         )}
@@ -379,7 +451,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
-            {displayedResults.map((item, idx) => {
+            {displayedResults.map((item) => {
               const q = item.question;
               const isWrong = !item.isCorrect && !item.isUnanswered;
               const isUnanswered = item.isUnanswered;
@@ -409,7 +481,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                       {item.isCorrect
                         ? '+2 pts (Correct)'
                         : isUnanswered
-                        ? '0 pt (Sans réponse)'
+                        ? '0 pt (Non répondue)'
                         : `${item.points} pt (Erreur)`}
                     </span>
                   </div>
@@ -434,7 +506,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                         Votre sélection :
                       </div>
                       {isUnanswered ? (
-                        <span className="italic">Aucune option cochée</span>
+                        <span className="italic">Non répondue (interrompue avant réponse)</span>
                       ) : (
                         <span>
                           Option <strong>{item.userAnswer}</strong> —{' '}
@@ -481,13 +553,25 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          {isInterrupted && canResume && onResumeQuiz && unansweredCount > 0 && (
+            <button
+              type="button"
+              onClick={onResumeQuiz}
+              className="px-4 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Reprendre ({unansweredCount} restantes)</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onRetakeSameQuiz}
             className="px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium transition-colors cursor-pointer"
           >
-            Retenter l'examen
+            Retenter l'épreuve
           </button>
+          
           <button
             id="btn-view-correction"
             type="button"

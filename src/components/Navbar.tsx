@@ -4,7 +4,7 @@ import { ModuleId } from '../types';
 import { MODULE_DEFINITIONS } from '../utils/quizDataLoader';
 
 interface NavbarProps {
-  currentView: 'home' | 'setup' | 'quiz' | 'results' | 'correction';
+  currentView: 'home' | 'setup' | 'quiz' | 'results' | 'correction' | 'custom-import';
   selectedModuleId: ModuleId;
   onSelectModule: (moduleId: ModuleId) => void;
   onNavigateHome: () => void;
@@ -97,6 +97,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Module 2
               </button>
               <button
+                id="nav-select-module-5"
+                type="button"
+                onClick={() => onSelectModule('module-5')}
+                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  selectedModuleId === 'module-5'
+                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                Module 5
+              </button>
+              <button
                 id="nav-select-module-all"
                 type="button"
                 onClick={() => onSelectModule('module-all')}
@@ -106,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'hover:text-slate-900'
                 }`}
               >
-                Tous (1+2)
+                Tous (1, 2, 5)
               </button>
             </div>
           )}
