@@ -37,8 +37,8 @@ import {
 } from './utils/historyStorage';
 
 export default function App() {
-  // 1. Choix du module (Module 1, 2, 5, ou Tous)
-  const [selectedModuleId, setSelectedModuleId] = useState<ModuleId>('module-1');
+  // 1. Choix du module (Module 5 par défaut à l'accueil)
+  const [selectedModuleId, setSelectedModuleId] = useState<ModuleId>('module-5');
 
   // Surcharges éventuelles du markdown éditées par l'utilisateur
   const [customMarkdownMap, setCustomMarkdownMap] = useState<Partial<Record<ModuleId, string>>>({});
@@ -57,14 +57,14 @@ export default function App() {
   // Session active ou interrompue enregistrée
   const [activeSession, setActiveSession] = useState<ActiveExamSession | null>(() => getStoredActiveExamSession());
 
-  // Texte markdown actif correspondant au module choisi
+  // Texte source actif correspondant au module choisi
   const currentMarkdownText = useMemo(() => {
     if (customMarkdownMap[selectedModuleId]) {
       return customMarkdownMap[selectedModuleId]!;
     }
     if (selectedModuleId === 'module-1') return MODULE_1_MARKDOWN_SOURCE;
     if (selectedModuleId === 'module-2') return MODULE_2_MARKDOWN_SOURCE;
-    if (selectedModuleId === 'module-5') return MODULE_5_CSV_SOURCE;
+    if (selectedModuleId === 'module-5' || selectedModuleId === 'module-5-all') return MODULE_5_CSV_SOURCE;
     return `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}\n\n# MODULE 5 (CSV SOURCE)\n${MODULE_5_CSV_SOURCE}`;
   }, [selectedModuleId, customMarkdownMap]);
 
@@ -78,9 +78,9 @@ export default function App() {
 
   // 3. Configuration de la session active
   const [currentConfig, setCurrentConfig] = useState<QuizConfig>({
-    moduleId: 'module-1',
+    moduleId: 'module-5',
     selectedChapterIds: [],
-    durationMinutes: 30,
+    durationMinutes: 60,
     passThresholdPercent: 85,
     shuffleQuestions: false,
     shuffleAnswers: false,

@@ -239,9 +239,40 @@ export const SetupView: React.FC<SetupViewProps> = ({
       );
     }
 
+    if (selectedModuleId === 'module-5' || selectedModuleId === 'module-5-all') {
+      return (
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.map((c) => c.id))}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+              isAllSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Tous les chapitres 5.1 à 5.6 ({chapters.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(0, 3).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Besoins, Cycle & Masse (5.1 à 5.3)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(3, 6).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Propulsion, VTOL & Montage (5.4 à 5.6)
+          </button>
+        </div>
+      );
+    }
+
     // module-all
     const mod1Chapters = chapters.filter((c) => c.code.startsWith('1.'));
     const mod2Chapters = chapters.filter((c) => c.code.startsWith('2.'));
+    const mod5Chapters = chapters.filter((c) => c.code.startsWith('5.'));
     return (
       <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
         <button
@@ -266,6 +297,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
           className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
         >
           Module 2 seul ({mod2Chapters.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds(mod5Chapters.map((c) => c.id))}
+          className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+        >
+          Module 5 seul ({mod5Chapters.length})
         </button>
       </div>
     );

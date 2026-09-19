@@ -1,6 +1,6 @@
 export type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E' | string;
 
-export type ModuleId = 'module-1' | 'module-2' | 'module-5' | 'module-all';
+export type ModuleId = 'module-1' | 'module-2' | 'module-5' | 'module-5-all' | 'module-all';
 
 export type ExamStatus = 'IN_PROGRESS' | 'COMPLETED' | 'INTERRUPTED' | 'INTERROMPU';
 

@@ -16,6 +16,22 @@ import { parseMarkdownQuiz, ParseResult } from './markdownParser';
 import { parseAndValidateCsv } from './csvParser';
 
 export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
+  'module-5': {
+    id: 'module-5',
+    name: 'Module 5 — Format Standard (10 q/chapitre)',
+    badge: 'Module 5 Express',
+    subtitle: '6 chapitres • 60 questions (10/ch)',
+    description: 'Format officiel standard avec 10 questions sélectionnées par chapitre, incluant impérativement les deux premières questions fondamentales de chaque chapitre.',
+    defaultTimeMinutes: 60
+  },
+  'module-5-all': {
+    id: 'module-5-all',
+    name: 'Module 5 — Banque Intégrale (Exhaustif)',
+    badge: 'Module 5 Intégral',
+    subtitle: '6 chapitres • 439 questions',
+    description: 'Banque complète exhaustive regroupant l\'ensemble des 439 questions du Module 5 (5.1 à 5.6) couvrant tout le cycle de conception drone.',
+    defaultTimeMinutes: 180
+  },
   'module-1': {
     id: 'module-1',
     name: 'Module 1 — Fondamentaux & Réglementation',
@@ -32,20 +48,12 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
     description: 'Aérodynamique, théorie du disque, commande sous-actionnée, repères & quaternions, moteurs brushless, asservissement PID, vibrations et simulation SITL.',
     defaultTimeMinutes: 60
   },
-  'module-5': {
-    id: 'module-5',
-    name: 'Module 5 — Conception, Propulsion & Dimensionnement',
-    badge: 'Module 5',
-    subtitle: '6 chapitres • 115 questions',
-    description: 'Cahier des charges, cycle de conception, bilan de masse & centrage, dimensionnement propulsion & énergie, études de cas voilure fixe/VTOL, nomenclature & montage.',
-    defaultTimeMinutes: 75
-  },
   'module-all': {
     id: 'module-all',
-    name: 'Examen Global — Tous les Modules (1, 2 & 5)',
+    name: 'Examen Global — Tous les Modules',
     badge: 'Modules 1, 2 & 5',
-    subtitle: '24 chapitres • 205 questions',
-    description: 'Simulation complète et exhaustive regroupant l\'ensemble des épreuves officielles des Modules 1, 2 et 5.',
+    subtitle: '24 chapitres • 150 questions',
+    description: 'Simulation complète regroupant le Module 1 (30 q), le Module 2 (60 q) et le Module 5 Express (60 q).',
     defaultTimeMinutes: 120
   }
 };
@@ -81,14 +89,53 @@ export function saveAnswerOverride(chapterCode: string, questionNumber: number, 
 }
 
 /**
- * Charge les chapitres et questions pour le module choisi (Module 1, Module 2, Module 5 ou Tous)
+ * Charge les chapitres et questions pour le module choisi (Module 1, Module 2, Module 5 Mini, Module 5 All ou Tous)
  */
 export function loadQuizDataForModule(
-  moduleId: ModuleId = 'module-1',
+  moduleId: ModuleId = 'module-5',
   customSource?: string
 ): ParseResult {
-  // Module 5 (intégré à partir du fichier CSV officiel)
+  // Module 5 (Format Standard : 10 questions par chapitre, 2 premières questions garanties)
   if (moduleId === 'module-5') {
+    const csvContent = customSource || MODULE_5_CSV_SOURCE;
+    const csvResult = parseAndValidateCsv(csvContent);
+
+    const miniChapters: Chapter[] = [];
+    const allMiniQuestions: Question[] = [];
+    let gIdx = 1;
+
+    for (const ch of csvResult.chapters) {
+      if (ch.questions.length === 0) continue;
+      // Les deux premières questions doivent TOUJOURS être là
+      const firstTwo = ch.questions.slice(0, 2);
+      // Les 8 questions suivantes pour atteindre 10 questions par chapitre
+      const nextEight = ch.questions.slice(2, 10);
+      const selected = [...firstTwo, ...nextEight];
+
+      const clonedQuestions: Question[] = selected.map((q, qIndex) => {
+        const cloned = { ...q, questionNumber: qIndex + 1, globalIndex: gIdx++ };
+        allMiniQuestions.push(cloned);
+        return cloned;
+      });
+
+      miniChapters.push({
+        ...ch,
+        shortTitle: `${ch.code} (10 q)`,
+        questions: clonedQuestions
+      });
+    }
+
+    return {
+      chapters: miniChapters,
+      allQuestions: allMiniQuestions,
+      totalQuestions: allMiniQuestions.length,
+      errors: csvResult.errors,
+      warnings: csvResult.warnings
+    };
+  }
+
+  // Module 5 All (Banque intégrale exhaustive de l'ensemble des questions)
+  if (moduleId === 'module-5-all') {
     const csvContent = customSource || MODULE_5_CSV_SOURCE;
     const csvResult = parseAndValidateCsv(csvContent);
     return {
@@ -100,7 +147,7 @@ export function loadQuizDataForModule(
     };
   }
 
-  // Module Global (combinaison ordonnée des modules 1, 2 et 5)
+  // Module Global (combinaison ordonnée des modules 1, 2 et 5 mini)
   if (moduleId === 'module-all') {
     const m1m2Source = customSource || `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
     const m1m2Result = parseMarkdownQuiz(m1m2Source);
@@ -121,8 +168,8 @@ export function loadQuizDataForModule(
       }
     }
 
-    const m5Result = parseAndValidateCsv(MODULE_5_CSV_SOURCE);
-    const allChapters = [...m1m2Result.chapters, ...m5Result.chapters];
+    const m5MiniResult = loadQuizDataForModule('module-5');
+    const allChapters = [...m1m2Result.chapters, ...m5MiniResult.chapters];
     const allQuestions: Question[] = [];
     let gIdx = 1;
 
@@ -137,8 +184,8 @@ export function loadQuizDataForModule(
       chapters: allChapters,
       allQuestions,
       totalQuestions: allQuestions.length,
-      errors: [...(m1m2Result.errors || []), ...m5Result.errors],
-      warnings: [...m1m2Result.warnings, ...m5Result.warnings]
+      errors: [...(m1m2Result.errors || []), ...m5MiniResult.errors],
+      warnings: [...m1m2Result.warnings, ...m5MiniResult.warnings]
     };
   }
 

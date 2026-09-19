@@ -53,7 +53,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onViewInterruptedSession,
   onDiscardActiveSession
 }) => {
-  const currentMod = MODULE_DEFINITIONS[selectedModuleId] || MODULE_DEFINITIONS['module-1'];
+  const currentMod = MODULE_DEFINITIONS[selectedModuleId] || MODULE_DEFINITIONS['module-5'];
   const advisedDuration = currentMod.defaultTimeMinutes;
 
   const answeredActiveCount = activeSession ? Object.keys(activeSession.answers || {}).length : 0;
@@ -226,11 +226,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Module Selector Segmented Cards */}
       <div className="mb-10">
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-          1. Choisir le module de formation
+          Choisir le module de formation
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {(['module-1', 'module-2', 'module-5', 'module-all'] as ModuleId[]).map((mId) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {(['module-5', 'module-5-all', 'module-1', 'module-2', 'module-all'] as ModuleId[]).map((mId) => {
             const mod = MODULE_DEFINITIONS[mId];
             const isSelected = selectedModuleId === mId;
             return (
@@ -257,10 +257,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     )}
                   </div>
                   <div className="text-sm font-semibold leading-snug">
-                    {mId === 'module-1' && 'Fondamentaux & Réglementation'}
-                    {mId === 'module-2' && 'Mécanique du vol & Systèmes'}
-                    {mId === 'module-5' && 'Conception & Dimensionnement'}
-                    {mId === 'module-all' && 'Examen Intégral (1, 2 & 5)'}
+                    {mId === 'module-5' && 'Module 5 — Format Standard (10 q/ch)'}
+                    {mId === 'module-5-all' && 'Module 5 — Banque Intégrale (439 q)'}
+                    {mId === 'module-1' && 'Module 1 — Fondamentaux & Réglementation'}
+                    {mId === 'module-2' && 'Module 2 — Mécanique du vol & Systèmes'}
+                    {mId === 'module-all' && 'Examen Intégral (Tous les Modules)'}
                   </div>
                 </div>
                 <div className={`text-xs mt-3 pt-2 border-t ${isSelected ? 'border-slate-800 text-slate-300' : 'border-slate-100 text-slate-500'}`}>
@@ -316,8 +317,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="text-xs text-slate-500 mt-1">
             {selectedModuleId === 'module-1' && 'Chapitres (1.1 à 1.6)'}
             {selectedModuleId === 'module-2' && 'Chapitres (2.1 à 2.12)'}
-            {selectedModuleId === 'module-5' && 'Chapitres (5.1 à 5.8)'}
-            {selectedModuleId === 'module-all' && 'Chapitres (26 au total)'}
+            {selectedModuleId === 'module-5' && 'Chapitres 5.1 à 5.6 (10 q/ch)'}
+            {selectedModuleId === 'module-5-all' && 'Chapitres 5.1 à 5.6 (Banque 439 q)'}
+            {selectedModuleId === 'module-all' && 'Chapitres (24 au total)'}
           </div>
         </div>
         <div>

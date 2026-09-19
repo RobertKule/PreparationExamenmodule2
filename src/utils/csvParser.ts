@@ -173,21 +173,22 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
     const rawCorrect = cols[headerMap['correct_answer']]?.trim()?.toUpperCase();
     const explanation = explanationIndex !== undefined && cols[explanationIndex] !== undefined ? cols[explanationIndex].trim() : '';
 
+    // Validation Chapitre
+    const chapterRef = chapterVal || 'Général';
+
     // Validation ID
     if (!idVal) {
       errors.push(`Ligne ${lineNum} : L'identifiant (id) est obligatoire.`);
       continue;
     }
-    if (seenIds.has(idVal)) {
-      errors.push(
-        `Ligne ${lineNum} : Identifiant dupliqué « ${idVal} » (déjà défini à la ligne ${seenIds.get(idVal)}).`
+    const idKey = `${chapterRef}:::${idVal}`;
+    const idCount = seenIds.get(idKey) || 0;
+    if (idCount > 0) {
+      warnings.push(
+        `Ligne ${lineNum} : Identifiant « ${idVal} » répété dans le chapitre « ${chapterRef} ». Un identifiant unique a été généré.`
       );
-    } else {
-      seenIds.set(idVal, lineNum);
     }
-
-    // Validation Chapitre
-    const chapterRef = chapterVal || 'Général';
+    seenIds.set(idKey, idCount + 1);
 
     // Validation Question
     if (!questionText) {
@@ -236,8 +237,11 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
       const chapterQuestionNumber = currentChapQuestions + 1;
       const globalNumber = parsedQuestions.length + 1;
 
+      const occCount = seenIds.get(idKey) || 1;
+      const uniqueSuffix = occCount > 1 ? `-${occCount}` : '';
+
       const q: Question = {
-        id: `q-csv-${chapCode.replace(/\./g, '-')}-${idVal}`,
+        id: `q-csv-${chapCode.replace(/\./g, '-')}-${idVal}${uniqueSuffix}`,
         chapterId: chapterId,
         chapterNumber: chapCode,
         chapterTitle: chapTitle,
