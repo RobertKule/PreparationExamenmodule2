@@ -59,6 +59,15 @@ function detectDelimiter(firstLine: string): string {
   return semiCount > commaCount ? ';' : ',';
 }
 
+const CANONICAL_CHAPTER_TITLES: Record<string, string> = {
+  '5.1': '5.1 — Du besoin au cahier des charges',
+  '5.2': '5.2 — Le cycle de conception',
+  '5.3': '5.3 — Masse maximale au décollage et centrage',
+  '5.4': "5.4 — Dimensionnement de la propulsion et de l'énergie",
+  '5.5': '5.5 — Étude de cas, voilure fixe et VTOL',
+  '5.6': '5.6 — Nomenclature et montage'
+};
+
 /**
  * Analyse et valide le contenu d'un fichier CSV de questions.
  */
@@ -219,7 +228,9 @@ export function parseAndValidateCsv(csvContent: string): CsvParseResult {
       if (numMatch) {
         chapCode = numMatch[1];
         const rawLabel = numMatch[2]?.trim() || '';
-        chapTitle = rawLabel ? `${chapCode} — ${rawLabel}` : `Chapitre ${chapCode}`;
+        chapTitle = rawLabel 
+          ? `${chapCode} — ${rawLabel}` 
+          : (CANONICAL_CHAPTER_TITLES[chapCode] || `Chapitre ${chapCode}`);
         chapShortTitle = `Chapitre ${chapCode}`;
         chapterId = `ch-${chapCode.replace(/\./g, '-')}`;
       }

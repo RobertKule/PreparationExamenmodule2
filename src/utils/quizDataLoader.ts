@@ -28,8 +28,8 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
     id: 'module-5-all',
     name: 'Module 5 — Banque Intégrale (Exhaustif)',
     badge: 'Module 5 Intégral',
-    subtitle: '6 chapitres • 439 questions',
-    description: 'Banque complète exhaustive regroupant l\'ensemble des 439 questions du Module 5 (5.1 à 5.6) couvrant tout le cycle de conception drone.',
+    subtitle: '6 chapitres • 470 questions',
+    description: 'Banque complète exhaustive regroupant l\'ensemble des 470 questions du Module 5 (5.1 à 5.6) couvrant tout le cycle de conception drone.',
     defaultTimeMinutes: 180
   },
   'module-1': {
