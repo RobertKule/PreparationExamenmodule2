@@ -258,7 +258,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
                   <div className="text-sm font-semibold leading-snug">
                     {mId === 'module-5' && 'Module 5 — Format Standard (10 q/ch)'}
-                    {mId === 'module-5-all' && 'Module 5 — Banque Intégrale (470 q)'}
+                    {mId === 'module-5-all' && 'Module 5 — Banque Intégrale (630 q)'}
                     {mId === 'module-1' && 'Module 1 — Fondamentaux & Réglementation'}
                     {mId === 'module-2' && 'Module 2 — Mécanique du vol & Systèmes'}
                     {mId === 'module-all' && 'Examen Intégral (Tous les Modules)'}
@@ -317,9 +317,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="text-xs text-slate-500 mt-1">
             {selectedModuleId === 'module-1' && 'Chapitres (1.1 à 1.6)'}
             {selectedModuleId === 'module-2' && 'Chapitres (2.1 à 2.12)'}
-            {selectedModuleId === 'module-5' && 'Chapitres 5.1 à 5.6 (10 q/ch)'}
-            {selectedModuleId === 'module-5-all' && 'Chapitres 5.1 à 5.6 (Banque 470 q)'}
-            {selectedModuleId === 'module-all' && 'Chapitres (24 au total)'}
+            {selectedModuleId === 'module-5' && 'Chapitres 5.1 à 5.10 (10 q/ch)'}
+            {selectedModuleId === 'module-5-all' && 'Chapitres 5.1 à 5.10 (Banque 630 q)'}
+            {selectedModuleId === 'module-all' && 'Chapitres (28 au total)'}
           </div>
         </div>
         <div>

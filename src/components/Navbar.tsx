@@ -13,11 +13,11 @@ interface NavbarProps {
 }
 
 const MODULE_LIST: { id: ModuleId; shortLabel: string; fullLabel: string }[] = [
-  { id: 'module-5', shortLabel: 'Mod 5 (10 q)', fullLabel: 'Module 5 — Format Standard (10 q/ch • 60 Q)' },
-  { id: 'module-5-all', shortLabel: 'Mod 5 (Intégral)', fullLabel: 'Module 5 — Banque Intégrale (470 Q)' },
+  { id: 'module-5', shortLabel: 'Mod 5 (10 q)', fullLabel: 'Module 5 — Format Standard (10 q/ch • 100 Q)' },
+  { id: 'module-5-all', shortLabel: 'Mod 5 (Intégral)', fullLabel: 'Module 5 — Banque Intégrale (630 Q)' },
   { id: 'module-1', shortLabel: 'Mod 1', fullLabel: 'Module 1 — Fondamentaux & Réglementation (30 Q)' },
   { id: 'module-2', shortLabel: 'Mod 2', fullLabel: 'Module 2 — Mécanique du vol & Systèmes (60 Q)' },
-  { id: 'module-all', shortLabel: 'Tous', fullLabel: 'Examen Global — Tous les Modules (150 Q)' }
+  { id: 'module-all', shortLabel: 'Tous', fullLabel: 'Examen Global — Tous les Modules (190 Q)' }
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({

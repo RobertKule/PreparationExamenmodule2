@@ -20,16 +20,16 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
     id: 'module-5',
     name: 'Module 5 — Format Standard (10 q/chapitre)',
     badge: 'Module 5 Express',
-    subtitle: '6 chapitres • 60 questions (10/ch)',
-    description: 'Format officiel standard avec 10 questions sélectionnées par chapitre, incluant impérativement les deux premières questions fondamentales de chaque chapitre.',
-    defaultTimeMinutes: 60
+    subtitle: '10 chapitres • 100 questions (10/ch)',
+    description: 'Format officiel standard avec 10 questions sélectionnées par chapitre (5.1 à 5.10), incluant impérativement les deux premières questions fondamentales de chaque chapitre.',
+    defaultTimeMinutes: 90
   },
   'module-5-all': {
     id: 'module-5-all',
     name: 'Module 5 — Banque Intégrale (Exhaustif)',
     badge: 'Module 5 Intégral',
-    subtitle: '6 chapitres • 470 questions',
-    description: 'Banque complète exhaustive regroupant l\'ensemble des 470 questions du Module 5 (5.1 à 5.6) couvrant tout le cycle de conception drone.',
+    subtitle: '10 chapitres • 630 questions',
+    description: 'Banque complète exhaustive regroupant l\'ensemble des 630 questions du Module 5 (5.1 à 5.10) couvrant tout le cycle de conception drone, maintenance, fabrication, bancs d\'essai et sécurité LiPo.',
     defaultTimeMinutes: 180
   },
   'module-1': {
@@ -52,9 +52,9 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
     id: 'module-all',
     name: 'Examen Global — Tous les Modules',
     badge: 'Modules 1, 2 & 5',
-    subtitle: '24 chapitres • 150 questions',
-    description: 'Simulation complète regroupant le Module 1 (30 q), le Module 2 (60 q) et le Module 5 Express (60 q).',
-    defaultTimeMinutes: 120
+    subtitle: '28 chapitres • 190 questions',
+    description: 'Simulation complète regroupant le Module 1 (30 q), le Module 2 (60 q) et le Module 5 Express (100 q).',
+    defaultTimeMinutes: 150
   }
 };
 
@@ -106,6 +106,7 @@ export function loadQuizDataForModule(
 
     for (const ch of csvResult.chapters) {
       if (ch.questions.length === 0) continue;
+
       // Les deux premières questions doivent TOUJOURS être là
       const firstTwo = ch.questions.slice(0, 2);
       // Les 8 questions suivantes pour atteindre 10 questions par chapitre

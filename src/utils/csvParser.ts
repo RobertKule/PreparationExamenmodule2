@@ -65,7 +65,11 @@ const CANONICAL_CHAPTER_TITLES: Record<string, string> = {
   '5.3': '5.3 — Masse maximale au décollage et centrage',
   '5.4': "5.4 — Dimensionnement de la propulsion et de l'énergie",
   '5.5': '5.5 — Étude de cas, voilure fixe et VTOL',
-  '5.6': '5.6 — Nomenclature et montage'
+  '5.6': '5.6 — Nomenclature et montage',
+  '5.7': '5.7 — Configuration, calibration et premiers vols',
+  '5.8': '5.8 — Maintenance et inspection',
+  '5.9': '5.9 — La fabrication',
+  '5.10': "5.10 — Bancs d'essai, sécurité LiPo et workflow"
 };
 
 /**
