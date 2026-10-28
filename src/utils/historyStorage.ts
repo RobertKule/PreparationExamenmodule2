@@ -41,8 +41,10 @@ export function saveQuizResultToHistory(
       ? 'Module 2 : Mécanique du vol'
       : evaluation.moduleId === 'module-5'
       ? 'Module 5 : Conception & Dimensionnement'
+      : evaluation.moduleId === 'module-6'
+      ? 'Module 6 : Programmation & Autonomie'
       : evaluation.moduleId === 'module-all'
-      ? 'Examen Intégral (1, 2 & 5)'
+      ? 'Examen Intégral (1, 2, 5 & 6)'
       : 'Session d\'évaluation');
 
   const newEntry: QuizHistoryEntry = {

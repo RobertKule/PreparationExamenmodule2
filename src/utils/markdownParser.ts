@@ -78,6 +78,40 @@ export const CHAPTER_METADATA: Record<string, { short: string; title: string }> 
   '2.12': {
     short: 'Chapitre 2.12',
     title: 'Simulation logicielle (SITL) & Autopilote ArduPilot'
+  },
+
+  // Module 6 : Programmation et Autonomie logicielle
+  '6.1': {
+    short: 'Chapitre 6.1',
+    title: 'Les logiciels et outils du concepteur de drones'
+  },
+  '6.2': {
+    short: 'Chapitre 6.2',
+    title: 'Programmer en Python, pymavlink et DroneKit'
+  },
+  '6.3': {
+    short: 'Chapitre 6.3',
+    title: 'MAVSDK et le middleware ROS 2'
+  },
+  '6.4': {
+    short: 'Chapitre 6.4',
+    title: 'Le calculateur compagnon, mode Offboard et bonnes pratiques'
+  },
+  '6.5': {
+    short: 'Chapitre 6.5',
+    title: "Estimation d'état et filtre de Kalman"
+  },
+  '6.6': {
+    short: 'Chapitre 6.6',
+    title: 'Navigation visuelle, odométrie visuelle-inertielle et SLAM'
+  },
+  '6.7': {
+    short: 'Chapitre 6.7',
+    title: "Planification de trajectoire et évitement d'obstacles"
+  },
+  '6.8': {
+    short: 'Chapitre 6.8',
+    title: 'Suivi de trajectoire et vol sans GPS'
   }
 };
 

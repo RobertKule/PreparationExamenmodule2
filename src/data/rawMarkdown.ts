@@ -772,3 +772,337 @@ C. Une masse maximale au décollage inférieure au seuil réglementaire de l'Ét
 D. Un pilotage entièrement manuel, l'automatisme étant proscrit hors de la vue du télépilote.
 `;
 
+/**
+ * Source de vérité du contenu pédagogique - Module 6 : Programmation et Autonomie logicielle.
+ */
+export const MODULE_6_MARKDOWN_SOURCE = `6.1. Auto-évaluation
+Question 1. Dans quelle famille d'outils se range MAVProxy, station qui reçoit la liaison de l'appareil et peut la réémettre vers un script et vers une interface graphique ?
+A. Un configurateur de firmware, qui règle les gains PID d'un appareil de course.
+B. Un outil de conception, qui dessine la mécanique et l'électronique de l'appareil.
+C. Une station de contrôle au sol, qui supervise et distribue le flux de l'appareil.
+D. Un outil de diagnostic électronique, qui mesure la continuité et repère les interférences.
+Bonne réponse : C
+Explication : MAVProxy est une station de contrôle au sol (GCS) en ligne de commande. Sa fonctionnalité clé est le multiplexage client-serveur MAVLink : elle reçoit le flux série/radio et le redistribue vers plusieurs consommateurs (comme Mission Planner et un script Python).
+
+Question 2. Un concepteur veut exécuter un script Python qui commande un appareil simulé, tout en surveillant sa télémétrie dans une interface graphique. Quelle chaîne d'outils répond à ce besoin ?
+A. SITL pour simuler, MAVProxy pour multiplexer le flux, et une station sol graphique en parallèle du script.
+B. Un configurateur Betaflight pour simuler, relié directement à un tableur de supervision.
+C. Une station sol graphique seule, qui écrit et exécute elle-même le script d'autonomie.
+D. Le protocole MAVLink employé comme langage de programmation du comportement autonome.
+Bonne réponse : A
+Explication : La chaîne d'outils standard réunit le simulateur firmware (SITL), le multiplexeur (MAVProxy) qui distribue les paquets UDP, la GCS graphique (Mission Planner/QGC) pour la vue opérateur, et le script Python d'autonomie.
+
+Question 3. Sur une liaison à 57 600 bauds chargée à 27% par un jeu de supervision, on double la cadence de tous les flux. Que peut-on dire sans nouveau calcul détaillé ?
+A. La charge reste à 27%, car elle ne dépend que du nombre de messages, pas de leur cadence.
+B. La charge passe à environ 54%, car le débit est proportionnel à la cadence des flux.
+C. La charge passe à 100%, car doubler la cadence sature toujours la liaison.
+D. La charge diminue, car des messages plus fréquents sont mieux compressés.
+Bonne réponse : B
+Explication : Le débit D est linéairement proportionnel à la cadence f_i selon la formule D = 10 * sum(f_i * (p_i + 12)). Si toutes les cadences f_i doublent, le débit total et la charge doublent (27% * 2 = 54%).
+
+Question 4. Pour enregistrer les accélérations à 50 Hz afin d'analyser une vibration, faut-il privilégier le journal de télémétrie ou le journal embarqué DataFlash, et pourquoi ?
+A. Le journal de télémétrie, car il est reçu au sol et donc plus facile à consulter en direct.
+B. Le journal embarqué, car il est écrit sur la carte de l'autopilote sans passer par la radio, qui saturerait.
+C. Indifféremment, car les deux journaux enregistrent exactement les mêmes données aux mêmes cadences.
+D. Le journal de télémétrie, car le journal embarqué ne peut pas enregistrer les données d'accélération.
+Bonne réponse : B
+Explication : Une émission d'IMU/accélération à 50 Hz sur la liaison radio (limitée par le débit utile d'environ 28 800 bit/s) sature la bande passante. Le journal embarqué DataFlash écrit directement sur la carte SD/mémoire flash du contrôleur à haute fréquence sans contrainte radio.
+
+Question 5. Pourquoi le débit réellement utile d'une radio SiK à 57 600 bauds est-il plus faible que cette valeur ?
+A. Parce que la radio impose un chiffrement qui divise le débit par un facteur fixe de dix.
+B. Parce que le débit série annoncé est toujours une valeur fausse sans rapport avec le réel.
+C. Parce que la liaison 8N1 transmet 10 bits par octet, ce qui n'est pas compté dans le débit.
+D. Parce que la liaison est half-duplex et porte un surdébit de protocole, qui réduisent le débit utile.
+Bonne réponse : D
+Explication : La radio SiK fonctionne en alternat (half-duplex) et ajoute son propre surdébit de trame radio (correction d'erreur, entêtes radio), ce qui divise par deux environ le débit réellement utile (soit ~28 800 bit/s).
+
+6.2. Auto-évaluation
+Question 1. Pourquoi la boucle de stabilisation d'attitude n'est-elle pas écrite en Python sur le calculateur compagnon ?
+A. Parce que sa latence, variable et de quelques dizaines de millisecondes, est trop lente pour la stabilisation.
+B. Parce que Python ne sait pas lire les capteurs d'attitude de l'appareil en vol.
+C. Parce que le calculateur compagnon n'a pas accès aux moteurs, contrairement au flight controller.
+D. Parce que la réglementation interdit de programmer la stabilisation dans un langage interprété.
+Bonne réponse : A
+Explication : La stabilisation d'attitude exige une boucle temps réel déterministe à plusieurs centaines de hertz (ex: 400 Hz sur le microcontrôleur). La latence d'un script Python sous Linux (non temps réel) oscille de 10 à 50 ms, ce qui provoquerait l'instabilité et le crash de l'aéronef.
+
+Question 2. Un script pymavlink envoie une commande d'armement juste après avoir ouvert la connexion, sans autre étape, et rien ne se passe. Quelle est la cause la plus probable ?
+A. La commande d'armement doit toujours être précédée d'un décollage, envoyé en premier.
+B. Le mode GUIDED n'accepte jamais de commande d'armement venant d'un script externe.
+C. Le script n'a pas attendu le heartbeat, donc la cible de la commande n'est pas connue.
+D. La bibliothèque pymavlink ne permet pas d'armer, seule DroneKit en est capable.
+Bonne réponse : C
+Explication : wait_heartbeat() permet à pymavlink de découvrir le target_system et le target_component de l'autopilote. Sans cette attente, le script envoie le message vers un ID système inconnu/nul (0), et l'autopilote l'ignore.
+
+Question 3. Pour un projet d'autonomie destiné à durer et à être maintenu, faut-il bâtir sur pymavlink ou sur DroneKit, et pourquoi ?
+A. Sur DroneKit, car sa concision réduit le nombre de lignes et donc le nombre de bogues.
+B. Indifféremment, car les deux bibliothèques sont maintenues au même rythme.
+C. Sur DroneKit, car il est le seul optimisé pour PX4 comme pour ArduPilot.
+D. Sur pymavlink, car il est activement maintenu et donne accès à tout le protocole.
+Bonne réponse : D
+Explication : DroneKit est un projet abandonné (non maintenu depuis plusieurs années et non optimisé pour PX4). pymavlink est la bibliothèque officielle maintenue par le projet ArduPilot, offrant un accès complet à chaque message MAVLink.
+
+Question 4. Pour un ordre de déplacement de 50 m, faut-il une conversion géodésique complète ou l'approximation équirectangulaire suffit-elle ?
+A. Une géodésique complète, car l'approximation plate se trompe de plusieurs mètres dès 50 m.
+B. L'approximation suffit, car son erreur y est millimétrique, loin sous l'erreur du GPS.
+C. Une géodésique complète, car l'approximation ne vaut qu'exactement à l'équateur.
+D. L'approximation suffit, car aucune méthode n'est plus précise que le GPS de toute façon.
+Bonne réponse : B
+Explication : L'erreur de l'approximation plate (équirectangulaire) à 50 m est de l'ordre du millimètre, ce qui est totalement négligeable par rapport à la précision d'un GPS civil standard (1 à 2,5 mètres).
+
+Question 5. Dans quel ordre un script fait-il décoller un multirotor, et pourquoi attendre entre le décollage et l'action suivante ?
+A. Armer, décoller, puis passer en GUIDED, l'ordre du mode important peu au décollage.
+B. Décoller, puis armer, l'armement confirmant le décollage déjà lancé par le script.
+C. Passer en GUIDED, armer, décoller, puis attendre l'altitude avant l'action suivante.
+D. Passer en GUIDED, décoller, puis armer, l'armement n'étant utile qu'en vol stabilisé.
+Bonne réponse : C
+Explication : L'ordre logique et sécurisé est : 1. Activer le mode GUIDED, 2. Armer les moteurs, 3. Envoyer la commande de décollage (MAV_CMD_NAV_TAKEOFF), 4. Attendre dans une boucle que l'altitude relative atteigne la valeur cible (~95%) avant d'envoyer l'ordre suivant.
+
+6.3. Auto-évaluation
+Question 1. Quel est l'apport principal de MAVSDK par rapport à pymavlink pour un projet maintenu ?
+A. Il donne accès à chaque champ de chaque message brut, ce que pymavlink masque.
+B. Il offre des actions prêtes à l'emploi et reste activement maintenu, au prix du détail.
+C. Il remplace le protocole MAVLink par un protocole propriétaire plus rapide.
+D. Il s'exécute sur le flight controller, alors que pymavlink reste au sol.
+Bonne réponse : B
+Explication : MAVSDK offre une API moderne de haut niveau (C++/Python asynchrone) avec des fonctions claires (arm(), takeoff(), land()) sous la gouvernance de la Dronecode Foundation, remplaçant avantageusement DroneKit.
+
+Question 2. Dans le modèle de ROS 2, comment un nœud de caméra transmet-il ses images à un détecteur qui les analyse ?
+A. Par un service, en envoyant une requête au détecteur et en attendant sa réponse.
+B. En publiant les images sur un topic auquel le détecteur s'abonne, sans les connaître l'un l'autre.
+C. En écrivant les images dans un fichier que le détecteur relit à intervalle régulier.
+D. En appelant directement une fonction du détecteur à l'intérieur du même programme.
+Bonne réponse : B
+Explication : ROS 2 s'appuie sur le modèle Publication/Abonnement anonyme via des topics. Le nœud caméra produit le flux vidéo sur un topic, et le détecteur s'y abonne sans couplage direct entre les deux programmes.
+
+Question 3. Un nœud ROS 2 correctement écrit ne reçoit aucun topic /ap/ de l'autopilote ArduPilot. Quelle vérification faire en premier ?
+A. Vérifier que le paramètre DDS_ENABLE vaut 1 sur l'autopilote.
+B. Réécrire le nœud, car ArduPilot ne publie jamais de topics ROS 2.
+C. Remplacer ROS 2 par MAVROS, seul capable de parler à ArduPilot.
+D. Augmenter la profondeur de file du nœud pour recevoir les messages.
+Bonne réponse : A
+Explication : L'intégration DDS native d'ArduPilot (AP_DDS) est désactivée par défaut (DDS_ENABLE = 0). Aucun topic ROS 2 ne circule tant que ce paramètre n'est pas passé à 1 sur l'autopilote.
+
+Question 4. Une chaîne à trois nœuds a un âge maximal de données de 150 ms. On double la seule cadence du nœud le plus rapide. Que peut-on attendre de l'âge maximal ?
+A. Il est divisé par deux, car le nœud le plus rapide fixe la latence de la chaîne.
+B. Il augmente, car un nœud plus rapide surcharge les autres de messages.
+C. Il diminue peu, car ce sont les nœuds les plus lents qui pèsent le plus.
+D. Il devient nul, car un nœud assez rapide annule la latence de la chaîne.
+Bonne réponse : C
+Explication : Dans la formule de l'âge maximal t_age = sum(1/f_i) + t_tr, les nœuds ayant les plus faibles cadences f_i génèrent les périodes 1/f_i les plus longues. Augmenter un nœud déjà rapide ne réduit que très faiblement la somme totale.
+
+Question 5. Pour un projet réunissant une caméra, un détecteur, un planificateur et la commande de l'appareil en parallèle, quel outil est le plus adapté ?
+A. Un script pymavlink unique, car il est le plus simple à écrire et à déployer.
+B. DroneKit, car sa concision convient aux projets à plusieurs traitements.
+C. Un tableur, car il suit facilement les données des différents capteurs.
+D. Un middleware comme ROS 2, car il structure des nœuds parallèles réutilisables.
+Bonne réponse : D
+Explication : Dès qu'un système dépasse 2 ou 3 traitements concurrents lourds, l'utilisation d'un middleware (ROS 2) évite un script monolithique fragile en isolant les pannes et en structurant les flux via DDS.
+
+6.4. Auto-évaluation
+Question 1. Que devient un appareil ArduPilot en mode GUIDED si le calculateur compagnon cesse d'envoyer des consignes sans autre panne ?
+A. Il freine et maintient sa position, puis le failsafe agit si le silence se prolonge.
+B. Il poursuit indéfiniment la dernière consigne reçue jusqu'à épuisement de la batterie.
+C. Il tombe immédiatement, faute de consigne pour commander ses moteurs.
+D. Il repasse tout seul en mode manuel et rend la main au pilote sans délai.
+Bonne réponse : A
+Explication : Sur ArduPilot en mode GUIDED, l'absence de nouvelle consigne de vitesse/position provoque un freinage automatique et un passage en vol stationnaire, puis le Failsafe GCS prend le relais si le silence dépasse le délai configuré.
+
+Question 2. Un projet envoie ses consignes depuis une boucle unique qui lit la caméra, décide, puis envoie. Pourquoi cette architecture est-elle fragile ?
+A. Parce qu'une boucle unique consomme deux fois plus de calcul qu'un fil séparé.
+B. Parce qu'un traitement de perception long retarde l'envoi et peut faire perdre le mode.
+C. Parce que la caméra ne peut pas être lue dans la même boucle que l'envoi.
+D. Parce que MAVLink interdit d'envoyer une consigne après une lecture de caméra.
+Bonne réponse : B
+Explication : Dans une boucle unique, si le traitement d'image prend soudainement 0,7 s, l'intervalle entre consignes passe à 0,75 s. Comme 0,75 s > 0,5 s (seuil de perte), l'autopilote annule le mode ou freine au pire moment.
+
+Question 3. Une boucle unique envoie ses consignes à 20 Hz. Un traitement de perception passe soudain à 0,6 s. Que se passe-t-il, sachant que le mode se perd au-delà de 0,5 s de silence ?
+A. Rien, car 20 Hz garantit une consigne toutes les 50 ms quoi qu'il arrive.
+B. Le mode tient, car 0,6 s reste inférieur à la période nominale de la boucle.
+C. La perception est ignorée et la consigne précédente est renvoyée automatiquement.
+D. Le mode est perdu, car l'écart entre consignes atteint environ 0,65 s, au-delà du seuil.
+Bonne réponse : D
+Explication : En boucle unique, l'intervalle réel d'émission est delta_t = t_perc + T = 0,6 s + 0,05 s = 0,65 s. Dépassant le seuil de 0,5 s, le mode de vol est perdu.
+
+Question 4. Comment garantir un flux de consignes régulier malgré une perception parfois lente ?
+A. En accélérant la perception jusqu'à ce qu'elle tienne toujours sous 50 ms.
+B. En augmentant FS_GCS_TIMEOUT pour que l'autopilote tolère les trous du flux.
+C. En dédiant un fil qui envoie la dernière consigne à cadence fixe, indépendant de la perception.
+D. En réduisant la cadence des consignes à 2 Hz pour laisser du temps à la perception.
+Bonne réponse : C
+Explication : La solution d'architecture consiste à créer un thread d'émission dédié qui répète la dernière consigne connue à cadence fixe (ex: 20 Hz / 50 ms), pendant que le thread de perception met à jour cette consigne à son propre rythme.
+
+Question 5. À quoi servent respectivement le chien de garde côté calculateur et le failsafe FS_GCS_ENABLE côté autopilote ?
+A. Le chien de garde réagit au silence d'un composant, le failsafe au silence de tout le calculateur.
+B. Les deux font la même chose, l'un des deux est donc redondant et peut être retiré.
+C. Le chien de garde règle la cadence des consignes, le failsafe règle la vitesse de vol.
+D. Le failsafe réagit vite à la perception, le chien de garde attend cinq secondes avant d'agir.
+Bonne réponse : A
+Explication : Le watchdog applicatif (compagnon) réagit très vite (< 0,5 s) si un sous-module (ex: vision) se bloque. Le Failsafe GCS (autopilote) réagit si l'ensemble du calculateur compagnon plante ou s'éteint (FS_GCS_TIMEOUT = 3 s).
+
+6.5. Auto-évaluation
+Question 1. Pourquoi l’autopilote fusionne-t-il l’inertie et le GPS plutôt que de se fier au seul GPS ?
+A. Parce que le GPS est toujours plus précis que l’inertie et n’a donc pas besoin d’aide.
+B. Parce que l’inertie est rapide et réactive entre deux mesures GPS, lentes et bruitées.
+C. Parce que la loi impose l’usage simultané de deux capteurs de position sur un drone.
+D. Parce que le GPS mesure l’attitude, que l’inertie est incapable de fournir seule.
+Bonne réponse : B
+Explication : La centrale inertielle (IMU) mesure les mouvements à haute fréquence de manière très réactive. Le GPS (plus lent, rafraîchi à quelques hertz et bruité) permet quant à lui de recaler périodiquement la dérive accumulée par l'inertie.
+
+Question 2. Dans le cycle du filtre de Kalman, comment évolue l’incertitude sur l’estimation pendant l’étape de prédiction ?
+A. Elle augmente, car intégrer des mesures inertielles bruitées éloigne l’estimation de la vérité.
+B. Elle diminue, car la prédiction apporte une information nouvelle qui affine l’estimation.
+C. Elle reste constante, car la prédiction ne fait que recopier l’estimation précédente.
+D. Elle s’annule, car le modèle de mouvement est supposé parfaitement exact.
+Bonne réponse : A
+Explication : Pendant l'étape de prédiction, le filtre intègre les mesures des capteurs inertiels. Comme ces mesures comportent du bruit, cette intégration accumule des erreurs et fait augmenter l'incertitude (la variance P). C'est l'étape de correction par mesure externe qui la fait ensuite diminuer.
+
+Question 3. Une prédiction de variance 4 est corrigée par une mesure de variance 9. Que vaut le gain de Kalman, et que signifie-t-il ?
+A. Le gain vaut 0,69, et le filtre suit surtout la mesure, jugée plus fiable.
+B. Le gain vaut 2,25, et il amplifie l’innovation au-delà de sa valeur.
+C. Le gain vaut 0,31, et le filtre ne répercute qu’un tiers de l’innovation.
+D. Le gain vaut 0,50, car la correction partage toujours l’écart en deux parts égales.
+Bonne réponse : C
+Explication : Le gain de Kalman vaut K = P^- / (P^- + R) = 4 / (4 + 9) = 4 / 13 ≈ 0,31. La prédiction (variance 4) étant jugée plus sûre que la mesure (variance 9), le filtre ne répercute qu'environ un tiers de l'innovation (l'écart entre mesure et prédiction) sur l'estimation.
+
+Question 4. Pour un récepteur GPS RTK très précis, comment régler EK3_POSNE_M_NSE par rapport à un GPS standard ?
+A. Plus élevé, pour que le filtre se méfie d’une précision trop belle pour être vraie.
+B. Identique, car le paramètre ne dépend pas de la qualité du récepteur.
+C. Plus faible, car un récepteur précis mérite plus de confiance, donc un bruit plus petit.
+D. À zéro, pour que le filtre suive exactement le GPS sans aucune prédiction.
+Bonne réponse : C
+Explication : EK3_POSNE_M_NSE représente la variance du bruit de mesure R attribuée au GPS. Un récepteur RTK étant plus précis, son bruit est faible ; il faut donc régler un paramètre plus bas pour indiquer au filtre de lui accorder une plus forte confiance.
+
+Question 5. Une innovation normalisée reste durablement bien supérieure à l’unité. Qu’en déduire ?
+A. Que le filtre est particulièrement sain, puisque l’innovation est grande et informative.
+B. Que la variance de prédiction est devenue nulle, ce qui fige l’estimation.
+C. Que le gain de Kalman va automatiquement passer à 1 pour suivre la mesure.
+D. Que la mesure s’écarte de la prédiction bien plus que ne le prévoient les incertitudes.
+Bonne réponse : D
+Explication : L'innovation normalisée compare l'écart réel entre mesure et prédiction à l'incertitude globale attendue. Si elle dépasse nettement 1,0, cela signale une incohérence : la mesure est en désaccord anormal avec la prédiction (décrochage GPS, vibrations, perturbations).
+
+6.6. Auto-évaluation
+Question 1. Pourquoi une position issue de la caméra peut-elle remplacer celle du GPS dans l’EKF d’ArduPilot ?
+A. Parce que l’EKF réclame une mesure de position, quelle qu’en soit la source, pour sa correction.
+B. Parce que la caméra est toujours plus précise que le GPS en toutes circonstances.
+C. Parce que l’EKF cesse de fonctionner dès que le GPS est absent et doit être remplacé.
+D. Parce que la caméra mesure directement la position absolue sur la Terre, comme le GPS.
+Bonne réponse : A
+Explication : L’EKF d’ArduPilot n’impose pas que la position vienne obligatoirement des satellites ; il a simplement besoin d’une mesure de position, quelle qu’en soit la source, pour exécuter son étape de correction. Une position calculée par une caméra peut donc servir de source au même titre que le GPS.
+
+Question 2. D’où vient la dérive de l’odométrie visuelle sur un long trajet ?
+A. De l’accumulation des petites erreurs de chaque estimation de déplacement, sans correction.
+B. D’un défaut de la caméra, qui se corrige en augmentant sa résolution.
+C. Du GPS, dont les interférences perturbent le calcul visuel en arrière-plan.
+D. De la fermeture de boucle, qui introduit une erreur à chaque retour sur ses pas.
+Bonne réponse : A
+Explication : L’odométrie visuelle estime le mouvement en cumulant les déplacements relatifs image après image. Chaque estimation comportant une petite erreur, ces incertitudes s’accumulent sans borne au cours du temps et de la distance parcourue, provoquant une dérive inévitable sans recalage externe.
+
+Question 3. Que résout l’ajout de l’inertie à une odométrie visuelle monoculaire ?
+A. Rien, l’inertie n’apporte aucune information utile à une caméra qui voit déjà tout.
+B. L’ambiguïté d’échelle et la fragilité en mouvement rapide, l’inertie donnant l’échelle et la robustesse.
+C. La fermeture de boucle, que seule l’inertie sait déclencher en reconnaissant les lieux.
+D. La consommation électrique, une centrale inertielle consommant moins qu’une caméra.
+Bonne réponse : B
+Explication : Une caméra monoculaire seule ne perçoit pas l'échelle métrique absolue (effet de perspective géométrique). L'IMU mesure les accélérations réelles en m/s², ce qui permet de lever l'ambiguïté d'échelle et assure la continuité de l'estimation lors des mouvements rapides ou flous d'image (VIO).
+
+Question 4. Un drone parcourt 300 m en aller simple avec une VIO à 1 % de dérive. Quelle erreur de position attendre à l’arrivée, et le SLAM changerait-il quelque chose ici ?
+A. Environ 0,3 m, et le SLAM la réduirait encore par fermeture de boucle.
+B. Environ 30 m, car la dérive croît comme le carré de la distance parcourue.
+C. Zéro, car la VIO ne dérive pas tant que l’inertie fonctionne.
+D. Environ 3 m, mais le SLAM ne changerait rien faute de repasser par un lieu connu.
+Bonne réponse : D
+Explication : Avec un taux de dérive de 1 % sur une distance de 300 m en aller simple, l'erreur de position attendue à l'arrivée est de 300 m × 0,01 = 3 m. Sur un trajet en aller simple sans repasser par un lieu déjà exploré, le SLAM ne peut effectuer aucune fermeture de boucle ; il ne changerait donc rien ici.
+
+Question 5. Quel réglage indique à l’EKF de prendre sa position horizontale de la caméra plutôt que du GPS ?
+A. VISO_TYPE, en le réglant sur la valeur du GPS pour forcer la bascule.
+B. EK3_POSNE_M_NSE, en l’augmentant jusqu’à ce que le GPS soit ignoré.
+C. EK3_SRC1_POSXY, en le réglant sur ExternalNav pour désigner la source externe.
+D. Aucun, l’EKF choisit seul la caméra dès que le GPS disparaît, sans réglage.
+Bonne réponse : C
+Explication : Dans ArduPilot, le paramètre EK3_SRC1_POSXY sélectionne la source principale de position horizontale pour l'EKF3. Le régler sur ExternalNav configure explicitement le filtre pour utiliser les coordonnées de navigation externe fournies par le système de vision (par exemple via VISION_POSITION_ESTIMATE) au lieu du GPS.
+
+## CHAPITRE 6.7 : PLANIFICATION DE TRAJECTOIRE ET ÉVITEMENT D'OBSTACLES
+
+Question 1. Quelle est la différence de portée entre planification globale et évitement local ?
+A. La planification globale trace la route sur une carte connue, l’évitement local réagit aux obstacles imprévus.
+B. La planification globale est toujours plus rapide, l’évitement local toujours plus précis.
+C. Il n’y a aucune différence, les deux termes désignent le même algorithme sous deux noms.
+D. La planification globale s’exécute au sol, l’évitement local uniquement dans la station de contrôle.
+Bonne réponse : A
+Explication : Décider où aller se décompose en deux problèmes complémentaires : la planification globale calcule une route optimale sur une carte globale connue à l'avance, tandis que l'évitement local réactif traite les obstacles imprévus détectés en vol en temps réel par les capteurs de proximité.
+
+Question 2. Qu’apporte l’heuristique de l’algorithme A* par rapport à Dijkstra ?
+A. Elle garantit une solution même quand aucun chemin n’existe entre le départ et le but.
+B. Elle oriente l’exploration vers le but et accélère la recherche du plus court chemin.
+C. Elle supprime le besoin de carte, A* explorant l’environnement au hasard.
+D. Elle remplace la grille par un arbre d’échantillons tirés dans tout l’espace.
+Bonne réponse : B
+Explication : Dijkstra explore le graphe en aveugle dans toutes les directions de manière isotrope. A* ajoute une fonction heuristique h(n) qui estime (minorant) la distance restante vers le but, ce qui oriente et focalise l'exploration directement vers la cible, accélérant drastiquement la convergence vers le plus court chemin.
+
+Question 3. Quel est le défaut structurel des méthodes d’évitement purement réactives comme les champs de potentiels ?
+A. Elles consomment trop de mémoire, car elles stockent toute la carte de l’environnement.
+B. Elles ne fonctionnent qu’avec un GPS, et échouent dès que le signal disparaît.
+C. Elles peuvent figer l’appareil dans un minimum local, face à un obstacle concave ou une impasse.
+D. Elles trouvent toujours le plus court chemin, mais trop lentement pour le temps réel.
+Bonne réponse : C
+Explication : Dans les méthodes réactives par champs de potentiels ou BendyRuler, le drone est attiré par le but et repoussé par les obstacles. Si les forces répulsives et attractives s'équilibrent exactement (notamment dans un cul-de-sac ou face à un obstacle concave en forme de U), la résultante s'annule : le drone se fige dans un minimum local dont seule une planification globale peut le sortir.
+
+Question 4. Un drone vole à 5 m/s avec 0,2 s de latence et 3 m/s² de freinage. Quelle est sa distance d’arrêt, et que se passe-t-il si la vitesse double ?
+A. Environ 5,2 m, et elle double simplement à 10,4 m quand la vitesse double.
+B. Environ 1 m, car seule la distance de réaction compte dans un arrêt d’urgence.
+C. Environ 5,2 m, et elle plus que triple quand la vitesse double, à cause du terme de freinage.
+D. Elle est nulle, car un multirotor peut s’arrêter instantanément en inversant sa poussée.
+Bonne réponse : C
+Explication : La distance d'arrêt totale s'exprime par d = v × t_r + v² / (2a). À 5 m/s : d = 5 × 0,2 + 25 / (2 × 3) = 1,0 + 4,17 = 5,17 m ≈ 5,2 m. Si la vitesse double à 10 m/s : d = 10 × 0,2 + 100 / 6 = 2,0 + 16,67 = 18,67 m. La distance passe de 5,17 m à 18,67 m : elle fait plus que tripler (rapport ×3,6) en raison du terme quadratique de freinage v²/(2a).
+
+Question 5. Quel paramètre choisit l’algorithme d’évitement d’obstacles d’ArduPilot, et quelles valeurs propose-t-il ?
+A. OA_MARGIN_MAX, qui bascule entre évitement activé et désactivé selon sa valeur.
+B. EK3_SRC1_POSXY, qui choisit entre évitement global et évitement local.
+C. FS_GCS_ENABLE, qui déclenche l’évitement quand la liaison est perdue.
+D. OA_TYPE, qui propose BendyRuler, Dijkstra, ou la combinaison des deux.
+Bonne réponse : D
+Explication : Dans ArduPilot, OA_TYPE configure l'algorithme d'évitement d'obstacles autonome : 0 = désactivé, 1 = BendyRuler (évitement local réactif rapide), 2 = Dijkstra (planification globale sur grille / base de polygones), 3 = Dijkstra avec BendyRuler (combinaison globale + locale). OA_MARGIN_MAX règle quant à lui la distance de sécurité minimale aux obstacles.
+
+## CHAPITRE 6.8 : SUIVI DE TRAJECTOIRE ET VOL SANS GPS
+
+Question 1. En quoi consiste le suivi de trajectoire par point mobile ?
+A. À viser un point qui se déplace le long du chemin, un peu devant la position de l’appareil.
+B. À téléporter l’appareil d’un point de passage au suivant dès qu’il est atteint.
+C. À immobiliser l’appareil sur chaque point de passage avant de repartir vers le suivant.
+D. À suivre le GPS d’un autre appareil qui montre le chemin en le parcourant d’abord.
+Bonne réponse : A
+Explication : Le suivi par point mobile (ou carrot-chasing / guidage L1) consiste à projeter un point cible virtuel sur le chemin prévu, situé à une distance d'anticipation donnée en avant du drone, et à commander l'appareil pour rallier en permanence ce point en mouvement continu le long de la trajectoire.
+
+Question 2. Comment la distance du point mobile, ou la période L1, influe-t-elle sur le suivi ?
+A. Elle n’a aucun effet, le suivi étant identique quelle que soit cette distance.
+B. Une distance longue supprime toute coupe des angles, quelle que soit la vitesse.
+C. Une distance courte adoucit le suivi, une distance longue le rend plus vif et précis.
+D. Une distance courte donne un suivi serré et oscillant, une distance longue un suivi doux.
+Bonne réponse : D
+Explication : La distance d'anticipation (réglée par NAVL1_PERIOD ou la distance L1) agit comme un amortisseur : une distance courte force le drone à coller très agressivement au chemin, au risque d'induire des oscillations et des dépassements ; une distance longue lisse la trajectoire et produit un vol plus doux et fluide, mais coupe davantage les virages.
+
+Question 3. Un multirotor vole à 8 m/s avec 35 degrés d’inclinaison maximale. Quel rayon de virage minimal peut-il tenir, et que devient-il à 16 m/s ?
+A. Environ 9,3 m à 8 m/s, et il double à 18,6 m à 16 m/s.
+B. Environ 9,3 m à 8 m/s, et il quadruple à environ 37 m à 16 m/s.
+C. Le rayon est nul, un multirotor pouvant tourner sur place à toute vitesse.
+D. Environ 37 m à 8 m/s, décroissant quand la vitesse augmente.
+Bonne réponse : B
+Explication : La dynamique de virage coordonné impose a_lat = v² / R = g × tan(φ_max). Donc R = v² / (g × tan(φ_max)). Pour v = 8 m/s, g = 9,81 m/s² et φ = 35° (tan 35° ≈ 0,7002) : R = 64 / (9,81 × 0,7002) = 64 / 6,869 ≈ 9,32 m. Comme le rayon de virage croît avec le carré de la vitesse (v²), si la vitesse double à 16 m/s, le rayon quadruple : (16/8)² × 9,32 m = 4 × 9,32 m ≈ 37,3 m.
+
+Question 4. Que se passe-t-il si un chemin comporte un virage plus serré que le rayon minimal à la vitesse prévue ?
+A. L’appareil suit le virage exactement, la dynamique n’imposant aucune contrainte de rayon.
+B. L’appareil s’arrête définitivement, incapable de traiter un virage trop serré.
+C. L’appareil inverse sa trajectoire et revient au point précédent pour recommencer.
+D. L’appareil ralentit ou coupe le virage, la dynamique interdisant de le suivre exactement.
+Bonne réponse : D
+Explication : La physique impose une limite stricte à l'accélération centripète disponible liée à l'angle d'inclinaison maximal. Si la courbure du chemin exige un rayon inférieur au rayon dynamique minimal à la vitesse courante, le régulateur doit soit réduire la vitesse pour resserrer le virage, soit couper le virage (overshoot ou coupe d'angle avec WPNAV_RADIUS) afin de ne pas dépasser la poussée et l'inclinaison admissibles.
+
+Question 5. De quoi se compose la chaîne d’un vol autonome sans GPS ?
+A. Uniquement d’un GPS de secours qui prend le relais dès que le principal tombe.
+B. D’une seule brique nouvelle, la caméra, remplaçant tout le reste de l’autopilote.
+C. De la localisation, de l’estimation, de la planification, du suivi et de la commande.
+D. D’un pilotage manuel permanent, aucune autonomie n’étant possible sans GPS.
+Bonne réponse : C
+Explication : Le vol autonome sans GPS n'ajoute pas une boîte noire unique : il chaîne les briques fondamentales du système : localisation visuelle (caméra/VIO chapitre 6.6), estimation d'état et fusion de capteurs (EKF3 chapitre 6.5), planification de route et évitement d'obstacles (chapitre 6.7), suivi de trajectoire (chapitre 6.8) et régulation bas niveau / commande moteurs (chapitres 6.4 et module 5).
+`;
+

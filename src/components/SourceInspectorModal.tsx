@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Copy, RefreshCw, Upload, X } from 'lucide-react';
-import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
+import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE, MODULE_6_MARKDOWN_SOURCE } from '../data/rawMarkdown';
 import { MODULE_5_CSV_SOURCE } from '../data/module5Csv';
 import { ModuleId } from '../types';
 import { parseMarkdownQuiz, ParseResult } from '../utils/markdownParser';
@@ -55,7 +55,8 @@ export const SourceInspectorModal: React.FC<SourceInspectorModalProps> = ({
     if (selectedModuleId === 'module-1') return MODULE_1_MARKDOWN_SOURCE;
     if (selectedModuleId === 'module-2') return MODULE_2_MARKDOWN_SOURCE;
     if (selectedModuleId === 'module-5' || selectedModuleId === 'module-5-all') return MODULE_5_CSV_SOURCE;
-    return `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}\n\n# MODULE 5 (CSV)\n${MODULE_5_CSV_SOURCE}`;
+    if (selectedModuleId === 'module-6') return MODULE_6_MARKDOWN_SOURCE;
+    return `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}\n\n# MODULE 5 (CSV)\n${MODULE_5_CSV_SOURCE}\n\n${MODULE_6_MARKDOWN_SOURCE}`;
   };
 
   const handleReset = () => {

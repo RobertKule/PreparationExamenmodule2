@@ -249,7 +249,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               isAllSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Tous les chapitres 5.1 à 5.6 ({chapters.length})
+            Tous les chapitres ({chapters.length})
           </button>
           <button
             type="button"
@@ -265,6 +265,59 @@ export const SetupView: React.FC<SetupViewProps> = ({
           >
             Propulsion, VTOL & Montage (5.4 à 5.6)
           </button>
+          {chapters.length > 6 && (
+            <button
+              type="button"
+              onClick={() => setSelectedIds(chapters.slice(6, 10).map((c) => c.id))}
+              className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+              Config, Fab. & Bancs (5.7 à 5.10)
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (selectedModuleId === 'module-6') {
+      return (
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.map((c) => c.id))}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+              isAllSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Tous les chapitres ({chapters.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(0, 2).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Outils & Python (6.1 & 6.2)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(2, 4).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            ROS 2 & Compagnon (6.3 & 6.4)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(4, 6).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Kalman & Vision SLAM (6.5 & 6.6)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(chapters.slice(6, 8).map((c) => c.id))}
+            className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Évitement & Vol sans GPS (6.7 & 6.8)
+          </button>
         </div>
       );
     }
@@ -273,6 +326,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     const mod1Chapters = chapters.filter((c) => c.code.startsWith('1.'));
     const mod2Chapters = chapters.filter((c) => c.code.startsWith('2.'));
     const mod5Chapters = chapters.filter((c) => c.code.startsWith('5.'));
+    const mod6Chapters = chapters.filter((c) => c.code.startsWith('6.'));
     return (
       <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
         <button
@@ -304,6 +358,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
           className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
         >
           Module 5 seul ({mod5Chapters.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedIds(mod6Chapters.map((c) => c.id))}
+          className="px-3 py-1.5 rounded-md font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+        >
+          Module 6 seul ({mod6Chapters.length})
         </button>
       </div>
     );

@@ -10,7 +10,7 @@ import {
   QuizEvaluation
 } from '../types';
 import { DEFAULT_ANSWER_KEYS } from '../data/defaultAnswerKeys';
-import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE } from '../data/rawMarkdown';
+import { MODULE_1_MARKDOWN_SOURCE, MODULE_2_MARKDOWN_SOURCE, MODULE_6_MARKDOWN_SOURCE } from '../data/rawMarkdown';
 import { MODULE_5_CSV_SOURCE } from '../data/module5Csv';
 import { parseMarkdownQuiz, ParseResult } from './markdownParser';
 import { parseAndValidateCsv } from './csvParser';
@@ -32,6 +32,14 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
     description: 'Banque complète exhaustive regroupant l\'ensemble des 630 questions du Module 5 (5.1 à 5.10) couvrant tout le cycle de conception drone, maintenance, fabrication, bancs d\'essai et sécurité LiPo.',
     defaultTimeMinutes: 180
   },
+  'module-6': {
+    id: 'module-6',
+    name: 'Module 6 — Programmation & Autonomie Logicielle',
+    badge: 'Module 6',
+    subtitle: '8 chapitres • 40 questions',
+    description: "Outils logiciels, MAVProxy, télémétrie MAVLink 2, Python/pymavlink, MAVSDK, ROS 2 & DDS, calculateur compagnon, filtre de Kalman (EKF3), odométrie visuelle (VIO) & SLAM, planification & évitement d'obstacles, suivi L1 et vol sans GPS.",
+    defaultTimeMinutes: 50
+  },
   'module-1': {
     id: 'module-1',
     name: 'Module 1 — Fondamentaux & Réglementation',
@@ -51,10 +59,10 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleInfo> = {
   'module-all': {
     id: 'module-all',
     name: 'Examen Global — Tous les Modules',
-    badge: 'Modules 1, 2 & 5',
-    subtitle: '28 chapitres • 190 questions',
-    description: 'Simulation complète regroupant le Module 1 (30 q), le Module 2 (60 q) et le Module 5 Express (100 q).',
-    defaultTimeMinutes: 150
+    badge: 'Modules 1, 2, 5 & 6',
+    subtitle: '34 chapitres • 220 questions',
+    description: 'Simulation complète regroupant le Module 1 (30 q), le Module 2 (60 q), le Module 5 Express (100 q) et le Module 6 (30 q).',
+    defaultTimeMinutes: 180
   }
 };
 
@@ -148,13 +156,13 @@ export function loadQuizDataForModule(
     };
   }
 
-  // Module Global (combinaison ordonnée des modules 1, 2 et 5 mini)
+  // Module Global (combinaison ordonnée des modules 1, 2, 5 Express et 6)
   if (moduleId === 'module-all') {
-    const m1m2Source = customSource || `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}`;
-    const m1m2Result = parseMarkdownQuiz(m1m2Source);
+    const mdSource = customSource || `${MODULE_1_MARKDOWN_SOURCE}\n\n${MODULE_2_MARKDOWN_SOURCE}\n\n${MODULE_6_MARKDOWN_SOURCE}`;
+    const mdResult = parseMarkdownQuiz(mdSource);
     const overrides = getStoredAnswerOverrides();
 
-    for (const chapter of m1m2Result.chapters) {
+    for (const chapter of mdResult.chapters) {
       for (const q of chapter.questions) {
         const lookupKey = `${chapter.code}-${q.questionNumber}`;
         const defaultEntry = DEFAULT_ANSWER_KEYS[lookupKey];
@@ -170,7 +178,11 @@ export function loadQuizDataForModule(
     }
 
     const m5MiniResult = loadQuizDataForModule('module-5');
-    const allChapters = [...m1m2Result.chapters, ...m5MiniResult.chapters];
+    const mod1Chapters = mdResult.chapters.filter((c) => c.code.startsWith('1.'));
+    const mod2Chapters = mdResult.chapters.filter((c) => c.code.startsWith('2.'));
+    const mod6Chapters = mdResult.chapters.filter((c) => c.code.startsWith('6.'));
+    const allChapters = [...mod1Chapters, ...mod2Chapters, ...m5MiniResult.chapters, ...mod6Chapters];
+
     const allQuestions: Question[] = [];
     let gIdx = 1;
 
@@ -185,17 +197,19 @@ export function loadQuizDataForModule(
       chapters: allChapters,
       allQuestions,
       totalQuestions: allQuestions.length,
-      errors: [...(m1m2Result.errors || []), ...m5MiniResult.errors],
-      warnings: [...m1m2Result.warnings, ...m5MiniResult.warnings]
+      errors: [...(mdResult.errors || []), ...m5MiniResult.errors],
+      warnings: [...mdResult.warnings, ...m5MiniResult.warnings]
     };
   }
 
-  // Module 1 ou Module 2 (Markdown)
+  // Module 1, Module 2 ou Module 6 (Markdown)
   let source: string;
   if (customSource) {
     source = customSource;
   } else if (moduleId === 'module-1') {
     source = MODULE_1_MARKDOWN_SOURCE;
+  } else if (moduleId === 'module-6') {
+    source = MODULE_6_MARKDOWN_SOURCE;
   } else {
     source = MODULE_2_MARKDOWN_SOURCE;
   }

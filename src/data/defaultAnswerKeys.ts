@@ -412,5 +412,181 @@ export const DEFAULT_ANSWER_KEYS: Record<string, AnswerKeyEntry> = {
   '2.12-5': {
     answer: 'A',
     explanation: "Une simulation logicielle en boucle ne reproduit pas parfaitement les vibrations réelles, le bruit des capteurs, les défauts de fabrication et les caractéristiques du vent réel."
+  },
+
+  // ==========================================
+  // MODULE 6 : PROGRAMMATION & AUTONOMIE LOGICIELLE
+  // ==========================================
+
+  // 6.1 — Les logiciels et outils du concepteur de drones
+  '6.1-1': {
+    answer: 'C',
+    explanation: "MAVProxy est une station de contrôle au sol (GCS) en ligne de commande. Sa fonctionnalité clé est le multiplexage client-serveur MAVLink : elle reçoit le flux série/radio et le redistribue vers plusieurs consommateurs (comme Mission Planner et un script Python)."
+  },
+  '6.1-2': {
+    answer: 'A',
+    explanation: "La chaîne d'outils standard réunit le simulateur firmware (SITL), le multiplexeur (MAVProxy) qui distribue les paquets UDP, la GCS graphique (Mission Planner/QGC) pour la vue opérateur, et le script Python d'autonomie."
+  },
+  '6.1-3': {
+    answer: 'B',
+    explanation: "Le débit D est linéairement proportionnel à la cadence f_i selon la formule D = 10 * sum(f_i * (p_i + 12)). Si toutes les cadences f_i doublent, le débit total et la charge doublent (27% * 2 = 54%)."
+  },
+  '6.1-4': {
+    answer: 'B',
+    explanation: "Une émission d'IMU/accélération à 50 Hz sur la liaison radio (limitée par le débit utile d'environ 28 800 bit/s) sature la bande passante. Le journal embarqué DataFlash écrit directement sur la carte SD/mémoire flash du contrôleur à haute fréquence sans contrainte radio."
+  },
+  '6.1-5': {
+    answer: 'D',
+    explanation: "La radio SiK fonctionne en alternat (half-duplex) et ajoute son propre surdébit de trame radio (correction d'erreur, entêtes radio), ce qui divise par deux environ le débit réellement utile (soit ~28 800 bit/s)."
+  },
+
+  // 6.2 — Programmer en Python, pymavlink et DroneKit
+  '6.2-1': {
+    answer: 'A',
+    explanation: "La stabilisation d'attitude exige une boucle temps réel déterministe à plusieurs centaines de hertz (ex: 400 Hz sur le microcontrôleur). La latence d'un script Python sous Linux (non temps réel) oscille de 10 à 50 ms, ce qui provoquerait l'instabilité et le crash de l'aéronef."
+  },
+  '6.2-2': {
+    answer: 'C',
+    explanation: "wait_heartbeat() permet à pymavlink de découvrir le target_system et le target_component de l'autopilote. Sans cette attente, le script envoie le message vers un ID système inconnu/nul (0), et l'autopilote l'ignore."
+  },
+  '6.2-3': {
+    answer: 'D',
+    explanation: "DroneKit est un projet abandonné (non maintenu depuis plusieurs années et non optimisé pour PX4). pymavlink est la bibliothèque officielle maintenue par le projet ArduPilot, offrant un accès complet à chaque message MAVLink."
+  },
+  '6.2-4': {
+    answer: 'B',
+    explanation: "L'erreur de l'approximation plate (équirectangulaire) à 50 m est de l'ordre du millimètre, ce qui est totalement négligeable par rapport à la précision d'un GPS civil standard (1 à 2,5 mètres)."
+  },
+  '6.2-5': {
+    answer: 'C',
+    explanation: "L'ordre logique et sécurisé est : 1. Activer le mode GUIDED, 2. Armer les moteurs, 3. Envoyer la commande de décollage (MAV_CMD_NAV_TAKEOFF), 4. Attendre dans une boucle que l'altitude relative atteigne la valeur cible (~95%) avant d'envoyer l'ordre suivant."
+  },
+
+  // 6.3 — MAVSDK et le middleware ROS 2
+  '6.3-1': {
+    answer: 'B',
+    explanation: "MAVSDK offre une API moderne de haut niveau (C++/Python asynchrone) avec des fonctions claires (arm(), takeoff(), land()) sous la gouvernance de la Dronecode Foundation, remplaçant avantageusement DroneKit."
+  },
+  '6.3-2': {
+    answer: 'B',
+    explanation: "ROS 2 s'appuie sur le modèle Publication/Abonnement anonyme via des topics. Le nœud caméra produit le flux vidéo sur un topic, et le détecteur s'y abonne sans couplage direct entre les deux programmes."
+  },
+  '6.3-3': {
+    answer: 'A',
+    explanation: "L'intégration DDS native d'ArduPilot (AP_DDS) est désactivée par défaut (DDS_ENABLE = 0). Aucun topic ROS 2 ne circule tant que ce paramètre n'est pas passé à 1 sur l'autopilote."
+  },
+  '6.3-4': {
+    answer: 'C',
+    explanation: "Dans la formule de l'âge maximal t_age = sum(1/f_i) + t_tr, les nœuds ayant les plus faibles cadences f_i génèrent les périodes 1/f_i les plus longues. Augmenter un nœud déjà rapide ne réduit que très faiblement la somme totale."
+  },
+  '6.3-5': {
+    answer: 'D',
+    explanation: "Dès qu'un système dépasse 2 ou 3 traitements concurrents lourds, l'utilisation d'un middleware (ROS 2) évite un script monolithique fragile en isolant les pannes et en structurant les flux via DDS."
+  },
+
+  // 6.4 — Le calculateur compagnon, mode Offboard et bonnes pratiques
+  '6.4-1': {
+    answer: 'A',
+    explanation: "Sur ArduPilot en mode GUIDED, l'absence de nouvelle consigne de vitesse/position provoque un freinage automatique et un passage en vol stationnaire, puis le Failsafe GCS prend le relais si le silence dépasse le délai configuré."
+  },
+  '6.4-2': {
+    answer: 'B',
+    explanation: "Dans une boucle unique, si le traitement d'image prend soudainement 0,7 s, l'intervalle entre consignes passe à 0,75 s. Comme 0,75 s > 0,5 s (seuil de perte), l'autopilote annule le mode ou freine au pire moment."
+  },
+  '6.4-3': {
+    answer: 'D',
+    explanation: "En boucle unique, l'intervalle réel d'émission est delta_t = t_perc + T = 0,6 s + 0,05 s = 0,65 s. Dépassant le seuil de 0,5 s, le mode de vol est perdu."
+  },
+  '6.4-4': {
+    answer: 'C',
+    explanation: "La solution d'architecture consiste à créer un thread d'émission dédié qui répète la dernière consigne connue à cadence fixe (ex: 20 Hz / 50 ms), pendant que le thread de perception met à jour cette consigne à son propre rythme."
+  },
+  '6.4-5': {
+    answer: 'A',
+    explanation: "Le watchdog applicatif (compagnon) réagit très vite (< 0,5 s) si un sous-module (ex: vision) se bloque. Le Failsafe GCS (autopilote) réagit si l'ensemble du calculateur compagnon plante ou s'éteint (FS_GCS_TIMEOUT = 3 s)."
+  },
+
+  // 6.5 — Estimation d'état et filtre de Kalman
+  '6.5-1': {
+    answer: 'B',
+    explanation: "La centrale inertielle (IMU) mesure les mouvements à haute fréquence de manière très réactive. Le GPS (plus lent, rafraîchi à quelques hertz et bruité) permet quant à lui de recaler périodiquement la dérive accumulée par l'inertie."
+  },
+  '6.5-2': {
+    answer: 'A',
+    explanation: "Pendant l'étape de prédiction, le filtre intègre les mesures des capteurs inertiels. Comme ces mesures comportent du bruit, cette intégration accumule des erreurs et fait augmenter l'incertitude (la variance P). C'est l'étape de correction par mesure externe qui la fait ensuite diminuer."
+  },
+  '6.5-3': {
+    answer: 'C',
+    explanation: "Le gain de Kalman vaut K = P^- / (P^- + R) = 4 / (4 + 9) = 4 / 13 ≈ 0,31. La prédiction (variance 4) étant jugée plus sûre que la mesure (variance 9), le filtre ne répercute qu'environ un tiers de l'innovation sur l'estimation."
+  },
+  '6.5-4': {
+    answer: 'C',
+    explanation: "EK3_POSNE_M_NSE représente la variance du bruit de mesure R attribuée au GPS. Un récepteur RTK étant plus précis, son bruit est faible ; il faut donc régler un paramètre plus bas pour indiquer au filtre de lui accorder une plus forte confiance."
+  },
+  '6.5-5': {
+    answer: 'D',
+    explanation: "L'innovation normalisée compare l'écart réel entre mesure et prédiction à l'incertitude globale attendue. Si elle dépasse nettement 1,0, cela signale une incohérence : la mesure est en désaccord anormal avec la prédiction (décrochage GPS, vibrations, perturbations)."
+  },
+
+  // 6.6 — Navigation visuelle, odométrie visuelle-inertielle et SLAM
+  '6.6-1': {
+    answer: 'A',
+    explanation: "L’EKF d’ArduPilot n’impose pas que la position vienne obligatoirement des satellites ; il a simplement besoin d’une mesure de position, quelle qu’en soit la source, pour exécuter son étape de correction. Une position calculée par une caméra peut donc servir de source au même titre que le GPS."
+  },
+  '6.6-2': {
+    answer: 'A',
+    explanation: "L’odométrie visuelle estime le mouvement en cumulant les déplacements relatifs image après image. Chaque estimation comportant une petite erreur, ces incertitudes s’accumulent sans borne au cours du temps et de la distance parcourue, provoquant une dérive inévitable sans recalage externe."
+  },
+  '6.6-3': {
+    answer: 'B',
+    explanation: "Une caméra monoculaire seule ne perçoit pas l'échelle métrique absolue (effet de perspective géométrique). L'IMU mesure les accélérations réelles en m/s², ce qui permet de lever l'ambiguïté d'échelle et assure la continuité de l'estimation lors des mouvements rapides ou flous d'image (VIO)."
+  },
+  '6.6-4': {
+    answer: 'D',
+    explanation: "Avec un taux de dérive de 1 % sur une distance de 300 m en aller simple, l'erreur de position attendue à l'arrivée est de 300 m × 0,01 = 3 m. Sur un trajet en aller simple sans repasser par un lieu déjà exploré, le SLAM ne peut effectuer aucune fermeture de boucle ; il ne changerait donc rien ici."
+  },
+  '6.6-5': {
+    answer: 'C',
+    explanation: "Dans ArduPilot, le paramètre EK3_SRC1_POSXY sélectionne la source principale de position horizontale pour l'EKF3. Le régler sur ExternalNav configure explicitement le filtre pour utiliser les coordonnées de navigation externe fournies par le système de vision (par exemple via VISION_POSITION_ESTIMATE) au lieu du GPS."
+  },
+  '6.7-1': {
+    answer: 'A',
+    explanation: "Décider où aller se décompose en deux problèmes complémentaires : la planification globale calcule une route optimale sur une carte globale connue à l'avance, tandis que l'évitement local réactif traite les obstacles imprévus détectés en vol en temps réel par les capteurs de proximité."
+  },
+  '6.7-2': {
+    answer: 'B',
+    explanation: "Dijkstra explore le graphe en aveugle dans toutes les directions de manière isotrope. A* ajoute une fonction heuristique h(n) qui estime (minorant) la distance restante vers le but, ce qui oriente et focalise l'exploration directement vers la cible, accélérant drastiquement la convergence vers le plus court chemin."
+  },
+  '6.7-3': {
+    answer: 'C',
+    explanation: "Dans les méthodes réactives par champs de potentiels ou BendyRuler, le drone est attiré par le but et repoussé par les obstacles. Si les forces répulsives et attractives s'équilibrent exactement (notamment dans un cul-de-sac ou face à un obstacle concave en forme de U), la résultante s'annule : le drone se fige dans un minimum local dont seule une planification globale peut le sortir."
+  },
+  '6.7-4': {
+    answer: 'C',
+    explanation: "La distance d'arrêt totale s'exprime par d = v × t_r + v² / (2a). À 5 m/s : d = 5 × 0,2 + 25 / (2 × 3) = 1,0 + 4,17 = 5,17 m ≈ 5,2 m. Si la vitesse double à 10 m/s : d = 10 × 0,2 + 100 / 6 = 2,0 + 16,67 = 18,67 m. La distance passe de 5,17 m à 18,67 m : elle fait plus que tripler (rapport ×3,6) en raison du terme quadratique de freinage v²/(2a)."
+  },
+  '6.7-5': {
+    answer: 'D',
+    explanation: "Dans ArduPilot, OA_TYPE configure l'algorithme d'évitement d'obstacles autonome : 0 = désactivé, 1 = BendyRuler (évitement local réactif rapide), 2 = Dijkstra (planification globale sur grille / base de polygones), 3 = Dijkstra avec BendyRuler (combinaison globale + locale). OA_MARGIN_MAX règle quant à lui la distance de sécurité minimale aux obstacles."
+  },
+  '6.8-1': {
+    answer: 'A',
+    explanation: "Le suivi par point mobile (ou carrot-chasing / guidage L1) consiste à projeter un point cible virtuel sur le chemin prévu, situé à une distance d'anticipation donnée en avant du drone, et à commander l'appareil pour rallier en permanence ce point en mouvement continu le long de la trajectoire."
+  },
+  '6.8-2': {
+    answer: 'D',
+    explanation: "La distance d'anticipation (réglée par NAVL1_PERIOD ou la distance L1) agit comme un amortisseur : une distance courte force le drone à coller très agressivement au chemin, au risque d'induire des oscillations et des dépassements ; une distance longue lisse la trajectoire et produit un vol plus doux et fluide, mais coupe davantage les virages."
+  },
+  '6.8-3': {
+    answer: 'B',
+    explanation: "La dynamique de virage coordonné impose a_lat = v² / R = g × tan(φ_max). Donc R = v² / (g × tan(φ_max)). Pour v = 8 m/s, g = 9,81 m/s² et φ = 35° (tan 35° ≈ 0,7002) : R = 64 / (9,81 × 0,7002) = 64 / 6,869 ≈ 9,32 m. Comme le rayon de virage croît avec le carré de la vitesse (v²), si la vitesse double à 16 m/s, le rayon quadruple : (16/8)² × 9,32 m = 4 × 9,32 m ≈ 37,3 m."
+  },
+  '6.8-4': {
+    answer: 'D',
+    explanation: "La physique impose une limite stricte à l'accélération centripète disponible liée à l'angle d'inclinaison maximal. Si la courbure du chemin exige un rayon inférieur au rayon dynamique minimal à la vitesse courante, le régulateur doit soit réduire la vitesse pour resserrer le virage, soit couper le virage (overshoot ou coupe d'angle avec WPNAV_RADIUS) afin de ne pas dépasser la poussée et l'inclinaison admissibles."
+  },
+  '6.8-5': {
+    answer: 'C',
+    explanation: "Le vol autonome sans GPS n'ajoute pas une boîte noire unique : il chaîne les briques fondamentales du système : localisation visuelle (caméra/VIO chapitre 6.6), estimation d'état et fusion de capteurs (EKF3 chapitre 6.5), planification de route et évitement d'obstacles (chapitre 6.7), suivi de trajectoire (chapitre 6.8) et régulation bas niveau / commande moteurs (chapitres 6.4 et module 5)."
   }
 };
